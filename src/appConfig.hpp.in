@@ -1,0 +1,13 @@
+#pragma once
+
+constexpr const char *const PROJECT_NAME = "@PROJECT_NAME@";
+constexpr const char *const ORGANIZATION_DOMAIN = "https://github.com/TaipaXu";
+constexpr const char *const PROJECT_DOMAIN = "https://github.com/TaipaXu/floo-network";
+constexpr const char *const PROJECT_ISSUES_DOMAIN = "https://github.com/TaipaXu/floo-network/issues";
+constexpr const char *const PROJECT_VERSION = "@PROJECT_VERSION@";
+constexpr const char *const PROJECT_VERSION_MAJOR = "@PROJECT_VERSION_MAJOR@";
+constexpr const char *const PROJECT_VERSION_MINOR = "@PROJECT_VERSION_MINOR@";
+constexpr const char *const PROJECT_VERSION_PATCH = "@PROJECT_VERSION_PATCH@";
+constexpr const char *const DISPLAY_NAME = "Floo Network";
+
+constexpr const int REBOOT_CODE = 1000;
