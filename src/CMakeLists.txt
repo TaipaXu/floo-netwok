@@ -41,6 +41,7 @@ qt_add_qml_module(${TARGET}
     NO_RESOURCE_TARGET_PATH
     QML_FILES
         "widgets/MainWindow.qml"
+        "widgets/Tray.qml"
         "widgets/MainWindowMenuBar.qml"
         "widgets/Navbar.qml"
         "widgets/NavButton.qml"

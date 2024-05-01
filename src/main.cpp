@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
     app.setOrganizationDomain(ORGANIZATION_DOMAIN);
     app.setApplicationVersion(PROJECT_VERSION);
     app.setApplicationName(PROJECT_NAME);
+    app.setQuitOnLastWindowClosed(false);
 
     app.setWindowIcon(QIcon(":/images/icon"));
 

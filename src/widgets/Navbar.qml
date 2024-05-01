@@ -96,7 +96,7 @@ Rectangle {
         }
 
         MenuItem {
-            text: qsTr("Join a channel");
+            text: qsTr("Join a channel")
 
             onTriggered: root.requestJoinChannel()
         }

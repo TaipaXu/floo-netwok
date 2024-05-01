@@ -36,13 +36,9 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
 
-        onEntered: {
-            hover = true
-        }
+        onEntered: hover = true
 
-        onExited: {
-            hover = false
-        }
+        onExited: hover = false
 
         onClicked: (mouse) => {
             if (mouse.button === Qt.LeftButton) {

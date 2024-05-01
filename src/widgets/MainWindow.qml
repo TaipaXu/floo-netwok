@@ -44,4 +44,6 @@ ApplicationWindow {
             }
         }
     }
+
+    Tray { }
 }
