@@ -1,5 +1,19 @@
 <RCC>
     <qresource prefix="/images">
         <file alias="icon">./assets/images/icon.png</file>
+        <file alias="home">./assets/images/home.png</file>
+        <file alias="home-active">./assets/images/home-active.png</file>
+        <file alias="create">./assets/images/create.png</file>
+        <file alias="create-active">./assets/images/create-active.png</file>
+        <file alias="server">./assets/images/server.png</file>
+        <file alias="server-active">./assets/images/server-active.png</file>
+        <file alias="client">./assets/images/client.png</file>
+        <file alias="client-active">./assets/images/client-active.png</file>
+        <file alias="settings">./assets/images/settings.png</file>
+        <file alias="settings-active">./assets/images/settings-active.png</file>
+        <file alias="upload">./assets/images/upload.png</file>
+        <file alias="upload-active">./assets/images/upload-active.png</file>
+        <file alias="download">./assets/images/download.png</file>
+        <file alias="download-active">./assets/images/download-active.png</file>
     </qresource>
 </RCC>

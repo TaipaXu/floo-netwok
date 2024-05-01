@@ -10,4 +10,20 @@ ApplicationWindow {
     minimumWidth: 700
     minimumHeight: 350
     visible: true
+
+    RowLayout {
+        anchors.fill: parent
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+
+        Navbar {
+            id: navbar
+            width: 40
+            Layout.fillHeight: true
+
+            onCurrentTypeChanged: {
+                console.log("currentTypeChanged", navbar.currentType);
+            }
+        }
+    }
 }
