@@ -11,6 +11,24 @@ ApplicationWindow {
     minimumHeight: 350
     visible: true
 
+    menuBar: MainWindowMenuBar {
+        id: menuBar
+
+        onRequestCreateChannel: {
+
+        }
+        onRequestJoinChannel: {
+
+        }
+
+        onRequestShowUploader: {
+
+        }
+        onRequestShowDownloader: {
+
+        }
+    }
+
     RowLayout {
         anchors.fill: parent
         Layout.fillWidth: true
