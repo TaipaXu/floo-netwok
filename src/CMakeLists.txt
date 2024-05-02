@@ -50,4 +50,5 @@ qt_add_qml_module(${TARGET}
         "widgets/NavButton.qml"
         "widgets/Home.qml"
         "widgets/CreateChannelDialog.qml"
+        "widgets/JoinChannelDialog.qml"
 )

@@ -1,19 +1,18 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import utils
 
 ApplicationWindow {
     id: root
     width: 400
     height: 200
-    title: qsTr("Create a channel")
+    title: qsTr("Join a channel")
     modality: Qt.WindowModal
     visible: true
 
     readonly property int defaultPort: 1024
 
-    signal accepted(string name, string address, int port)
+    signal accepted(string address, int port)
 
     ColumnLayout {
         anchors.fill: parent
@@ -21,21 +20,10 @@ ApplicationWindow {
         spacing: 8
 
         TextField {
-            id: channelName
-            Layout.fillWidth: true
-            placeholderText: qsTr("Channel name")
-            text: qsTr("New channel")
-            focus: true
-
-            Keys.onReturnPressed: {
-                channelAddress.focus = true;
-            }
-        }
-
-        ComboBox {
             id: channelAddress
             Layout.fillWidth: true
-            model: utils.getLocalAddresses()
+            placeholderText: qsTr("Channel address")
+            focus: true
 
             Keys.onReturnPressed: {
                 channelPort.focus = true;
@@ -84,17 +72,13 @@ ApplicationWindow {
         onActivated: cancel()
     }
 
-    Utils {
-        id: utils
-    }
-
     onClosing: {
         root.destroy();
     }
 
     function submit() {
-        if (channelName.length > 0 && channelAddress.currentText.length > 0 && channelPort.length > 0) {
-            root.accepted(channelName.text, channelAddress.currentText, parseInt(channelPort.text));
+        if (channelAddress.length > 0 && channelPort.length > 0) {
+            root.accepted(channelAddress.text, parseInt(channelPort.text));
             root.close();
         }
     }

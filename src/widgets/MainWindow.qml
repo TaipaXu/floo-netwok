@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
-
 ApplicationWindow {
     id: root
     title: qsTr("Floo Network")
@@ -16,9 +15,7 @@ ApplicationWindow {
         id: menuBar
 
         onRequestCreateChannel: showCreateChannelDialog()
-        onRequestJoinChannel: {
-
-        }
+        onRequestJoinChannel: showJoinChannelDialog()
 
         onRequestShowUploader: {
 
@@ -43,6 +40,7 @@ ApplicationWindow {
             }
 
             onRequestCreateChannel: showCreateChannelDialog()
+            onRequestJoinChannel: showJoinChannelDialog()
         }
 
         StackLayout {
@@ -56,9 +54,7 @@ ApplicationWindow {
                 Layout.fillHeight: true
 
                 onRequestCreateChannel: showCreateChannelDialog()
-                onRequestJoinChannel: {
-
-                }
+                onRequestJoinChannel: showJoinChannelDialog()
             }
 
             function getCurrentIndex() {
@@ -84,12 +80,25 @@ ApplicationWindow {
         const component = Qt.createComponent("qrc:/widgets/CreateChannelDialog.qml");
         if (component.status === Component.Ready) {
             const dialog = component.createObject(root);
-            dialog.accepted.connect(onAccepted);
+            dialog.accepted.connect(onCreateChannelAccepted);
             dialog.show();
         }
     }
 
-    function onAccepted(name, address, port) {
-        console.log("onAccepted", name, address, port);
+    function onCreateChannelAccepted(name, address, port) {
+        console.log("onCreateChannelAccepted", name, address, port);
+    }
+
+    function showJoinChannelDialog() {
+        const component = Qt.createComponent("qrc:/widgets/JoinChannelDialog.qml");
+        if (component.status === Component.Ready) {
+            const dialog = component.createObject(root);
+            dialog.accepted.connect(onJoinChannelAccepted);
+            dialog.show();
+        }
+    }
+
+    function onJoinChannelAccepted(address, port) {
+        console.log("onAccepted", address, port);
     }
 }
