@@ -37,8 +37,8 @@ Platform.SystemTrayIcon {
     }
 
     onActivated: {
-        root.show()
-        root.raise()
-        root.requestActivate()
+        root.show();
+        root.raise();
+        root.requestActivate();
     }
 }

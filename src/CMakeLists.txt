@@ -13,6 +13,9 @@ set(SOURCES
         core.hpp
         core.cpp
 
+        utils/utils.hpp
+        utils/utils.cpp
+
         assets.qrc
 )
 
@@ -46,4 +49,5 @@ qt_add_qml_module(${TARGET}
         "widgets/Navbar.qml"
         "widgets/NavButton.qml"
         "widgets/Home.qml"
+        "widgets/CreateChannelDialog.qml"
 )

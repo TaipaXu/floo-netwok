@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 
+
 ApplicationWindow {
     id: root
     title: qsTr("Floo Network")
@@ -14,9 +15,7 @@ ApplicationWindow {
     menuBar: MainWindowMenuBar {
         id: menuBar
 
-        onRequestCreateChannel: {
-
-        }
+        onRequestCreateChannel: showCreateChannelDialog()
         onRequestJoinChannel: {
 
         }
@@ -42,6 +41,8 @@ ApplicationWindow {
             onCurrentTypeChanged: {
                 console.log("currentTypeChanged", navbar.currentType);
             }
+
+            onRequestCreateChannel: showCreateChannelDialog()
         }
 
         StackLayout {
@@ -54,9 +55,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                onRequestCreateChannel: {
-
-                }
+                onRequestCreateChannel: showCreateChannelDialog()
                 onRequestJoinChannel: {
 
                 }
@@ -80,4 +79,17 @@ ApplicationWindow {
     }
 
     Tray { }
+
+    function showCreateChannelDialog() {
+        const component = Qt.createComponent("qrc:/widgets/CreateChannelDialog.qml");
+        if (component.status === Component.Ready) {
+            const dialog = component.createObject(root);
+            dialog.accepted.connect(onAccepted);
+            dialog.show();
+        }
+    }
+
+    function onAccepted(name, address, port) {
+        console.log("onAccepted", name, address, port);
+    }
 }
