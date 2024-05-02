@@ -45,4 +45,5 @@ qt_add_qml_module(${TARGET}
         "widgets/MainWindowMenuBar.qml"
         "widgets/Navbar.qml"
         "widgets/NavButton.qml"
+        "widgets/Home.qml"
 )

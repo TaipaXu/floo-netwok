@@ -43,6 +43,40 @@ ApplicationWindow {
                 console.log("currentTypeChanged", navbar.currentType);
             }
         }
+
+        StackLayout {
+            id: mainStack
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            currentIndex: getCurrentIndex()
+
+            Home {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+
+                onRequestCreateChannel: {
+
+                }
+                onRequestJoinChannel: {
+
+                }
+            }
+
+            function getCurrentIndex() {
+                switch (navbar.currentType) {
+                    case Navbar.Type.Home:
+                        return 0;
+                    case Navbar.Type.Channel:
+                        return 1;
+                    case Navbar.Type.Upload:
+                        return 2;
+                    case Navbar.Type.Download:
+                        return 3;
+                    case Navbar.Type.Settings:
+                        return 4;
+                }
+            }
+        }
     }
 
     Tray { }
