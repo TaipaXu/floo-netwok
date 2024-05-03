@@ -4,6 +4,8 @@
 
 [English](./README.md) | 中文
 
+![](./app.png)
+
 ## 编译
 
 ```sh

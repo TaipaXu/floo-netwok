@@ -4,6 +4,8 @@ A desktop application for file sharing that allows users to share and download f
 
 English | [中文](./README_ZH.md)
 
+![](./app.png)
+
 ## Compiling
 
 ```sh
