@@ -124,6 +124,18 @@ ApplicationWindow {
         }
     }
 
+    Action {
+        text: "Toggle Fullscreen"
+        shortcut: StandardKey.FullScreen
+        onTriggered: {
+            if (root.visibility === Window.FullScreen) {
+                root.visibility = Window.Windowed;
+            } else {
+                root.visibility = Window.FullScreen;
+            }
+        }
+    }
+
     Tray { }
 
     function showCreateChannelDialog() {
