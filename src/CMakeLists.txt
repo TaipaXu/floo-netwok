@@ -13,6 +13,9 @@ set(SOURCES
         core.hpp
         core.cpp
 
+        models/channel.hpp
+        models/channel.cpp
+
         utils/utils.hpp
         utils/utils.cpp
 
@@ -51,4 +54,6 @@ qt_add_qml_module(${TARGET}
         "widgets/Home.qml"
         "widgets/CreateChannelDialog.qml"
         "widgets/JoinChannelDialog.qml"
+        "widgets/ClientChannel.qml"
+        "widgets/ServerChannel.qml"
 )

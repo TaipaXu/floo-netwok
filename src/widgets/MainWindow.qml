@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt.labs.qmlmodels
+import model.channel as Model
 
 ApplicationWindow {
     id: root
@@ -10,6 +12,8 @@ ApplicationWindow {
     minimumWidth: 700
     minimumHeight: 350
     visible: true
+
+    property list<Model.Channel> channels: []
 
     menuBar: MainWindowMenuBar {
         id: menuBar
@@ -34,13 +38,26 @@ ApplicationWindow {
             id: navbar
             width: 40
             Layout.fillHeight: true
+            channels: root.channels
 
             onCurrentTypeChanged: {
-                console.log("currentTypeChanged", navbar.currentType);
+
             }
 
             onRequestCreateChannel: showCreateChannelDialog()
             onRequestJoinChannel: showJoinChannelDialog()
+
+            onCurrentChannelIndexChanged: {
+
+            }
+            onRequestCloseChannel: (index) => {
+                root.channels.splice(index, 1);
+                if (navbar.channels.length === 0) {
+                    navbar.currentType = Navbar.Type.Home;
+                } else if (navbar.currentChannelIndex >= navbar.channels.length) {
+                    navbar.currentChannelIndex = navbar.channels.length - 1;
+                }
+            }
         }
 
         StackLayout {
@@ -55,6 +72,39 @@ ApplicationWindow {
 
                 onRequestCreateChannel: showCreateChannelDialog()
                 onRequestJoinChannel: showJoinChannelDialog()
+            }
+
+            StackLayout {
+                id: stackView
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                currentIndex: navbar.currentChannelIndex
+
+                Repeater {
+                    model: root.channels
+                    DelegateChooser {
+                        role: "type"
+
+                        DelegateChoice {
+                            roleValue: Model.Channel.Server
+                            ItemDelegate {
+                                ServerChannel {
+                                    width: parent.width
+                                    height: parent.height
+                                }
+                            }
+                        }
+                        DelegateChoice {
+                            roleValue: Model.Channel.Client
+                            ItemDelegate {
+                                ClientChannel {
+                                    width: parent.width
+                                    height: parent.height
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             function getCurrentIndex() {
@@ -87,6 +137,18 @@ ApplicationWindow {
 
     function onCreateChannelAccepted(name, address, port) {
         console.log("onCreateChannelAccepted", name, address, port);
+        const channel = Qt.createQmlObject(`
+            import model.channel 1.0;
+            Channel {
+                type: Channel.Server
+                name: "${name}"
+                address: "${address}"
+                port: ${port}
+            }
+        `, root);
+        root.channels.push(channel);
+        navbar.currentChannelIndex = root.channels.length - 1;
+        navbar.currentType = Navbar.Type.Channel;
     }
 
     function showJoinChannelDialog() {
@@ -100,5 +162,16 @@ ApplicationWindow {
 
     function onJoinChannelAccepted(address, port) {
         console.log("onAccepted", address, port);
+        const channel = Qt.createQmlObject(`
+            import model.channel 1.0;
+            Channel {
+                type: Channel.Client
+                address: "${address}"
+                port: ${port}
+            }
+        `, root);
+        root.channels.push(channel);
+        navbar.currentChannelIndex = root.channels.length - 1;
+        navbar.currentType = Navbar.Type.Channel;
     }
 }

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import model.channel 1.0 as Model
 
 Rectangle {
     id: root
@@ -15,11 +16,14 @@ Rectangle {
     }
 
     readonly property int spacingValue: 4
+    property int currentChannelIndex: -1
     property int currentType: Navbar.Type.Home
+    property list<Model.Channel> channels
 
     signal requestShowHome
     signal requestCreateChannel
     signal requestJoinChannel
+    signal requestCloseChannel(int index)
     signal requestShowUploader
     signal requestShowDownloader
 
@@ -55,6 +59,28 @@ Rectangle {
             Column {
                 anchors.fill: parent
                 spacing: spacingValue
+
+                Repeater {
+                    model: root.channels
+
+                    delegate: NavButton {
+                        width: parent.width
+                        height: width
+                        unactiveImage: modelData.type === Model.Channel.Server ? "qrc:/images/server" : "qrc:/images/client"
+                        activeImage: modelData.type === Model.Channel.Server ?  "qrc:/images/server-active" : "qrc:/images/client-active"
+                        active: root.currentType === Navbar.Type.Channel && root.currentChannelIndex === index
+
+                        onClicked: {
+                            root.currentChannelIndex = index;
+                            root.currentType = Navbar.Type.Channel;
+                        }
+
+                        onContextMenuRequested: {
+                            closeMenu.closeIndex = index;
+                            closeMenu.popup();
+                        }
+                    }
+                }
             }
         }
 
@@ -99,6 +125,17 @@ Rectangle {
             text: qsTr("Join a channel")
 
             onTriggered: root.requestJoinChannel()
+        }
+    }
+
+    Menu {
+        id: closeMenu
+        property int closeIndex: -1
+
+        MenuItem {
+            text: qsTr("Close this channel")
+
+            onTriggered: root.requestCloseChannel(closeMenu.closeIndex)
         }
     }
 }
