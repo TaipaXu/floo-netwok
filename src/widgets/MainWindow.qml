@@ -124,16 +124,28 @@ ApplicationWindow {
         }
     }
 
-    Action {
-        text: "Toggle Fullscreen"
-        shortcut: StandardKey.FullScreen
-        onTriggered: {
+    Shortcut {
+        sequences: [StandardKey.FullScreen]
+
+        onActivated: {
             if (root.visibility === Window.FullScreen) {
                 root.visibility = Window.Windowed;
             } else {
                 root.visibility = Window.FullScreen;
             }
         }
+    }
+
+    Shortcut {
+        sequence: StandardKey.Close
+
+        onActivated: root.close()
+    }
+
+    Shortcut {
+        sequence: StandardKey.Quit
+
+        onActivated: Qt.quit()
     }
 
     Tray { }
