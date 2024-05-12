@@ -13,7 +13,9 @@ ApplicationWindow {
     minimumHeight: 350
     visible: true
 
-    property list<Model.Channel> channels: []
+    ListModel {
+        id: channelsModel
+    }
 
     menuBar: MainWindowMenuBar {
         id: menuBar
@@ -38,7 +40,7 @@ ApplicationWindow {
             id: navbar
             width: 40
             Layout.fillHeight: true
-            channels: root.channels
+            channels: getChannels()
 
             onCurrentTypeChanged: {
 
@@ -51,12 +53,22 @@ ApplicationWindow {
 
             }
             onRequestCloseChannel: (index) => {
-                root.channels.splice(index, 1);
+                channelsModel.remove(index);
+                const channel = channelsModel.get(index).channel;
+                channel.destroy();
                 if (navbar.channels.length === 0) {
                     navbar.currentType = Navbar.Type.Home;
                 } else if (navbar.currentChannelIndex >= navbar.channels.length) {
                     navbar.currentChannelIndex = navbar.channels.length - 1;
                 }
+            }
+
+            function getChannels() {
+                const channels = [];
+                for (let i = 0; i < channelsModel.count; i++) {
+                    channels.push(channelsModel.get(i).channel);
+                }
+                return channels;
             }
         }
 
@@ -81,7 +93,7 @@ ApplicationWindow {
                 currentIndex: navbar.currentChannelIndex
 
                 Repeater {
-                    model: root.channels
+                    model: channelsModel
                     DelegateChooser {
                         role: "type"
 
@@ -91,7 +103,7 @@ ApplicationWindow {
                                 ServerChannel {
                                     width: parent.width
                                     height: parent.height
-                                    channel: modelData
+                                    channel: channelsModel.get(index).channel
                                 }
                             }
                         }
@@ -101,7 +113,7 @@ ApplicationWindow {
                                 ClientChannel {
                                     width: parent.width
                                     height: parent.height
-                                    channel: modelData
+                                    channel: channelsModel.get(index).channel
                                 }
                             }
                         }
@@ -164,7 +176,7 @@ ApplicationWindow {
     function onCreateChannelAccepted(name, address, port) {
         console.log("onCreateChannelAccepted", name, address, port);
         const channel = Qt.createQmlObject(`
-            import model.channel;
+            import model.channel
             Channel {
                 type: Channel.Server
                 name: "${name}"
@@ -172,8 +184,11 @@ ApplicationWindow {
                 port: ${port}
             }
         `, root);
-        root.channels.push(channel);
-        navbar.currentChannelIndex = root.channels.length - 1;
+        channelsModel.append({
+            type: Model.Channel.Server,
+            channel: channel
+        });
+        navbar.currentChannelIndex = channelsModel.count - 1;
         navbar.currentType = Navbar.Type.Channel;
     }
 
@@ -189,15 +204,18 @@ ApplicationWindow {
     function onJoinChannelAccepted(address, port) {
         console.log("onAccepted", address, port);
         const channel = Qt.createQmlObject(`
-            import model.channel;
+            import model.channel
             Channel {
                 type: Channel.Client
                 address: "${address}"
                 port: ${port}
             }
         `, root);
-        root.channels.push(channel);
-        navbar.currentChannelIndex = root.channels.length - 1;
+        channelsModel.append({
+            type: Model.Channel.Client,
+            channel: channel
+        });
+        navbar.currentChannelIndex = channelsModel.count - 1;
         navbar.currentType = Navbar.Type.Channel;
     }
 }

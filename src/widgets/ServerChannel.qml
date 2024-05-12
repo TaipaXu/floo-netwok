@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import model.channel as Model
 import model.myFile as Model
+import network.server as Network
 
 Rectangle {
     id: root
@@ -40,7 +41,9 @@ Rectangle {
 
                 onClicked: {
                     startButton.enabled = false;
-                    stopButton.enabled = false;
+                    stopButton.enabled = true;
+
+                    network.start(root.channel.address, root.channel.port);
                 }
             }
 
@@ -52,6 +55,8 @@ Rectangle {
                 onClicked: {
                     startButton.enabled = true;
                     stopButton.enabled = false;
+
+                    network.stop();
                 }
             }
         }
@@ -147,4 +152,10 @@ Rectangle {
             visible: dropArea.dragging
         }
     }
+
+    Network.Server {
+        id: network
+    }
+
+    Component.onDestruction: console.log("Server Channel Destruction Beginning!")
 }

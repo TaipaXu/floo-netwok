@@ -20,6 +20,11 @@ set(SOURCES
         models/myFile.hpp
         models/myFile.cpp
 
+        network/server.hpp
+        network/server.cpp
+        network/client.hpp
+        network/client.cpp
+
         utils/utils.hpp
         utils/utils.cpp
 

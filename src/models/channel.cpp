@@ -25,6 +25,11 @@ namespace Model
     {
     }
 
+    Channel::~Channel()
+    {
+        qDebug() << "Channel destructor";
+    }
+
     void Channel::setType(Type type)
     {
         channelType = type;

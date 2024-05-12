@@ -31,7 +31,7 @@ namespace Model
         explicit Channel(QObject *parent = nullptr);
         Q_INVOKABLE Channel(Type type, const QString &name, const QString &address, int port, QObject *parent = nullptr);
         Q_INVOKABLE Channel(Type type, const QString &address, int port, QObject *parent = nullptr);
-        ~Channel() = default;
+        ~Channel();
 
         Type getType() const;
         void setType(Type type);
