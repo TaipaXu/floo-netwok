@@ -1,4 +1,5 @@
 #include "./channel.hpp"
+#include <QFileInfo>
 
 namespace Model
 {
@@ -45,5 +46,15 @@ namespace Model
     {
         channelPort = port;
         emit portChanged(channelPort);
+    }
+
+    void Channel::addFiles(const QList<QUrl> &myFiles)
+    {
+        for (const QUrl &url : myFiles)
+        {
+            QFileInfo fileInfo(url.toLocalFile());
+            files.append(new MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+        }
+        emit filesChanged();
     }
 } // namespace Model

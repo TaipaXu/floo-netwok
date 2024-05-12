@@ -15,6 +15,10 @@ set(SOURCES
 
         models/channel.hpp
         models/channel.cpp
+        models/file.hpp
+        models/file.cpp
+        models/myFile.hpp
+        models/myFile.cpp
 
         utils/utils.hpp
         utils/utils.cpp
@@ -56,4 +60,6 @@ qt_add_qml_module(${TARGET}
         "widgets/JoinChannelDialog.qml"
         "widgets/ClientChannel.qml"
         "widgets/ServerChannel.qml"
+        "widgets/Tag.qml"
+        "widgets/MyFile.qml"
 )

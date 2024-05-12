@@ -12,4 +12,6 @@ public:
     ~Utils() = default;
 
     Q_INVOKABLE static QStringList getLocalAddresses();
+
+    static QString getReadableSize(long long int size);
 };

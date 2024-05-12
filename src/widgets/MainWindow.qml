@@ -91,6 +91,7 @@ ApplicationWindow {
                                 ServerChannel {
                                     width: parent.width
                                     height: parent.height
+                                    channel: modelData
                                 }
                             }
                         }
@@ -100,6 +101,7 @@ ApplicationWindow {
                                 ClientChannel {
                                     width: parent.width
                                     height: parent.height
+                                    channel: modelData
                                 }
                             }
                         }
@@ -162,7 +164,7 @@ ApplicationWindow {
     function onCreateChannelAccepted(name, address, port) {
         console.log("onCreateChannelAccepted", name, address, port);
         const channel = Qt.createQmlObject(`
-            import model.channel 1.0;
+            import model.channel;
             Channel {
                 type: Channel.Server
                 name: "${name}"
@@ -187,7 +189,7 @@ ApplicationWindow {
     function onJoinChannelAccepted(address, port) {
         console.log("onAccepted", address, port);
         const channel = Qt.createQmlObject(`
-            import model.channel 1.0;
+            import model.channel;
             Channel {
                 type: Channel.Client
                 address: "${address}"

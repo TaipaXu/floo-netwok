@@ -27,3 +27,26 @@ QStringList Utils::getLocalAddresses()
     }
     return addresses;
 }
+
+QString Utils::getReadableSize(long long int size)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1);
+    if (size < 1024)
+    {
+        ss << size << "B";
+    }
+    else if (size < 1024 * 1024)
+    {
+        ss << size / 1024.0 << "KB";
+    }
+    else if (size < 1024 * 1024 * 1024)
+    {
+        ss << size / 1024.0 / 1024 << "MB";
+    }
+    else
+    {
+        ss << size / 1024.0 / 1024 / 1024 << "GB";
+    }
+    return QString::fromStdString(ss.str());
+}
