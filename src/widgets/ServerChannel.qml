@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import model.channel as Model
 import model.myFile as Model
+import model.file as Model
 import network.server as Network
 
 Rectangle {
@@ -10,7 +11,6 @@ Rectangle {
     color: "#3F4246"
 
     required property Model.Channel channel
-    property int currentIndex: 0
 
     ColumnLayout {
         anchors.fill: parent
@@ -76,9 +76,23 @@ Rectangle {
 
             Tag {
                 text: qsTr("My Files")
+                active: stackView.currentIndex == 0
 
                 onClicked: {
+                    stackView.currentIndex = 0;
+                }
+            }
 
+            Repeater {
+                model: network.connections
+
+                Tag {
+                    text: modelData.address
+                    active: stackView.currentIndex == index + 1
+
+                    onClicked: {
+                        stackView.currentIndex = index + 1;
+                    }
                 }
             }
         }
@@ -93,7 +107,7 @@ Rectangle {
             StackLayout {
                 id: stackView
                 anchors.fill: parent
-                currentIndex: root.currentIndex
+                currentIndex: 0
 
                 Flickable {
                     id: flickable
@@ -118,6 +132,35 @@ Rectangle {
                                 Layout.preferredWidth: parent.width - 16
                                 Layout.alignment: Qt.AlignHCenter
                                 file: modelData
+                            }
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: network.connections
+                    delegate: Flickable {
+                        flickableDirection: Flickable.VerticalFlick
+                        contentHeight: content.height
+                        topMargin: 0
+                        clip: true
+
+                        ColumnLayout {
+                            id: content
+                            width: parent.width
+                            spacing: 10
+
+                            Item { }
+
+                            Repeater {
+                                model: modelData.files
+                                delegate: File {
+                                    required property Model.File modelData
+
+                                    Layout.preferredWidth: parent.width - 16
+                                    Layout.alignment: Qt.AlignHCenter
+                                    file: modelData
+                                }
                             }
                         }
                     }
@@ -155,6 +198,10 @@ Rectangle {
 
     Network.Server {
         id: network
+
+        onConnectionsChanged: {
+            console.log("Server Channel Connections Changed");
+        }
     }
 
     Component.onDestruction: console.log("Server Channel Destruction Beginning!")

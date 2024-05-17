@@ -3,8 +3,8 @@
 
 namespace Model
 {
-    File::File(const QString &name, long long int size, QObject *parent)
-        : QObject(parent), name{name}, size{size}
+    File::File(const QString &id, const QString &name, long long int size, QObject *parent)
+        : QObject(parent), id{id}, name{name}, size{size}
     {
     }
 

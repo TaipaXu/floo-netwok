@@ -19,6 +19,8 @@ set(SOURCES
         models/file.cpp
         models/myFile.hpp
         models/myFile.cpp
+        models/connection.hpp
+        models/connection.cpp
 
         network/server.hpp
         network/server.cpp
@@ -67,4 +69,5 @@ qt_add_qml_module(${TARGET}
         "widgets/ServerChannel.qml"
         "widgets/Tag.qml"
         "widgets/MyFile.qml"
+        "widgets/File.qml"
 )
