@@ -13,5 +13,7 @@ public:
 
     Q_INVOKABLE static QStringList getLocalAddresses();
 
+    static bool isLocalAddress(const QString &address);
+
     static QString getReadableSize(long long int size);
 };

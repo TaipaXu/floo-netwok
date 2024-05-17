@@ -22,8 +22,15 @@ namespace Model
         Q_PROPERTY(QString address READ getAddress CONSTANT)
         Q_PROPERTY(QList<Model::File *> files READ getFiles NOTIFY filesChanged)
 
+        enum class LinkType
+        {
+            TcpSocket,
+            Address
+        };
+
     public:
         Connection(QTcpSocket *tcpSocket, QObject *parent = nullptr);
+        Connection(const QString &address, QObject *parent = nullptr);
         ~Connection();
 
         const QTcpSocket *const getTcpSocket() const;
@@ -36,13 +43,25 @@ namespace Model
         void filesChanged() const;
 
     private:
-        QTcpSocket *tcpSocket;
+        LinkType linkType;
+        union Link
+        {
+            QTcpSocket *tcpSocket;
+            QString address;
+
+            Link()
+            {
+            }
+            ~Link()
+            {
+            }
+        } link;
         QList<Model::File *> files;
     };
 
     inline const QTcpSocket *const Connection::getTcpSocket() const
     {
-        return tcpSocket;
+        return link.tcpSocket;
     }
 
     inline QList<Model::File *> Connection::getFiles() const

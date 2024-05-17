@@ -2,8 +2,7 @@
 
 #include <QObject>
 #include <QAbstractSocket>
-#include <map>
-#include <memory>
+#include "models/connection.hpp"
 
 QT_BEGIN_NAMESPACE
 class QTcpSocket;
@@ -21,17 +20,24 @@ namespace Network
     {
         Q_OBJECT
 
+        Q_PROPERTY(QList<Model::Connection *> connections READ getConnections NOTIFY connectionsChanged)
+
     public:
         Client(QObject *parent = nullptr);
         ~Client();
 
         Q_INVOKABLE void start(const QString &address, int port);
         Q_INVOKABLE void stop();
+        QList<Model::Connection *> getConnections() const;
 
     signals:
         void connected() const;
         void disconnected() const;
         void connectError() const;
+        void connectionsChanged() const;
+
+    private:
+        void handleRequestFiles(const QJsonObject &ipFiles);
 
     private slots:
         void handleConnected() const;
@@ -41,5 +47,11 @@ namespace Network
 
     private:
         QTcpSocket *tcpSocket;
+        QList<Model::Connection *> connections;
     };
+
+    inline QList<Model::Connection *> Client::getConnections() const
+    {
+        return connections;
+    }
 } // namespace Network

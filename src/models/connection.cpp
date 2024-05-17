@@ -4,23 +4,37 @@
 namespace Model
 {
     Connection::Connection(QTcpSocket *tcpSocket, QObject *parent)
-        : QObject(parent), tcpSocket{tcpSocket}
+        : QObject(parent), linkType{LinkType::TcpSocket}
     {
+        link.tcpSocket = tcpSocket;
+    }
+
+    Connection::Connection(const QString &address, QObject *parent)
+        : QObject(parent), linkType{LinkType::Address}
+    {
+        link.address = address;
     }
 
     Connection::~Connection()
     {
         qDebug() << "connection destructor";
-        if (tcpSocket)
+        if (linkType == LinkType::TcpSocket && link.tcpSocket)
         {
-            tcpSocket->deleteLater();
-            tcpSocket = nullptr;
+            link.tcpSocket->deleteLater();
+            link.tcpSocket = nullptr;
         }
     }
 
     QString Connection::getAddress() const
     {
-        return tcpSocket->peerAddress().toString();
+        if (linkType == LinkType::TcpSocket)
+        {
+            return link.tcpSocket->peerAddress().toString();
+        }
+        else
+        {
+            return link.address;
+        }
     }
 
     void Connection::setFiles(const QList<Model::File *> &files)

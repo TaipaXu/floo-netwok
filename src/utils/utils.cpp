@@ -28,6 +28,19 @@ QStringList Utils::getLocalAddresses()
     return addresses;
 }
 
+bool Utils::isLocalAddress(const QString &address)
+{
+    QStringList addresses = getLocalAddresses();
+    for (auto &&localAddress : addresses)
+    {
+        if (localAddress == address)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 QString Utils::getReadableSize(long long int size)
 {
     std::stringstream ss;

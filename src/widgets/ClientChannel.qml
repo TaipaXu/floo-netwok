@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import model.channel as Model
 import model.myFile as Model
+import model.file as Model
 import network.client as Network
 
 Rectangle {
@@ -73,9 +74,23 @@ Rectangle {
 
             Tag {
                 text: qsTr("My Files")
+                active: stackView.currentIndex == 0
 
                 onClicked: {
+                    stackView.currentIndex = 0;
+                }
+            }
 
+            Repeater {
+                model: network.connections
+
+                Tag {
+                    text: modelData.address
+                    active: stackView.currentIndex == index + 1
+
+                    onClicked: {
+                        stackView.currentIndex = index + 1;
+                    }
                 }
             }
         }
@@ -119,6 +134,35 @@ Rectangle {
                         }
                     }
                 }
+
+                Repeater {
+                    model: network.connections
+                    delegate: Flickable {
+                        flickableDirection: Flickable.VerticalFlick
+                        contentHeight: content.height
+                        topMargin: 0
+                        clip: true
+
+                        ColumnLayout {
+                            id: content
+                            width: parent.width
+                            spacing: 10
+
+                            Item { }
+
+                            Repeater {
+                                model: modelData.files
+                                delegate: File {
+                                    required property Model.File modelData
+
+                                    Layout.preferredWidth: parent.width - 16
+                                    Layout.alignment: Qt.AlignHCenter
+                                    file: modelData
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -152,6 +196,10 @@ Rectangle {
 
     Network.Client {
         id: network
+
+        onConnectionsChanged: {
+            console.log("Client Channel Connections Changed");
+        }
     }
 
     Component.onDestruction: console.log("Client Channel Destruction Beginning!")
