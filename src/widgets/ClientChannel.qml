@@ -105,7 +105,7 @@ Rectangle {
             StackLayout {
                 id: stackView
                 anchors.fill: parent
-                currentIndex: root.currentIndex
+                currentIndex: 0
 
                 Flickable {
                     id: flickable
@@ -123,13 +123,17 @@ Rectangle {
                         Item { }
 
                         Repeater {
-                            model: root.channel.files
+                            model: network.myFiles
                             delegate: MyFile {
                                 required property Model.MyFile modelData
 
                                 Layout.preferredWidth: parent.width - 16
                                 Layout.alignment: Qt.AlignHCenter
                                 file: modelData
+
+                                onRemove: {
+                                    network.removeMyFile(modelData);
+                                }
                             }
                         }
                     }
@@ -183,7 +187,7 @@ Rectangle {
         }
         onDropped: (drop) => {
             dropArea.dragging = false;
-            root.channel.addFiles(drop.urls);
+            network.addMyFiles(drop.urls);
         }
 
         Rectangle {

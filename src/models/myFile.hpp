@@ -12,7 +12,7 @@ namespace Model
 
     public:
         MyFile(const QString &name, long long int size, const QString &path, QObject *parent = nullptr);
-        ~MyFile() = default;
+        ~MyFile();
 
         const QString &getPath() const;
 
@@ -24,4 +24,6 @@ namespace Model
     {
         return path;
     }
+
+    QJsonArray toJson(const QList<Model::MyFile *> &files);
 } // namespace Model

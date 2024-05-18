@@ -4,8 +4,7 @@
 #include <QJsonParseError>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "models/file.hpp"
-#include "models/myFile.hpp"
+#include <QFileInfo>
 #include "utils/utils.hpp"
 
 namespace Network
@@ -47,6 +46,29 @@ namespace Network
         }
     }
 
+    void Client::addMyFiles(const QList<QUrl> &myFiles)
+    {
+        qDebug() << "Client::addMyFiles";
+        for (const QUrl &url : myFiles)
+        {
+            QFileInfo fileInfo(url.toLocalFile());
+            this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+        }
+        qDebug() << "size: " << myFiles.size();
+
+        emit myFilesChanged();
+        sendFilesInfoToServer();
+    }
+
+    void Client::removeMyFile(Model::MyFile *myFile)
+    {
+        myFiles.removeOne(myFile);
+        myFile->deleteLater();
+
+        emit myFilesChanged();
+        sendFilesInfoToServer();
+    }
+
     void Client::handleRequestFiles(const QJsonObject &ipFiles)
     {
         qDebug() << "client request files" << ipFiles;
@@ -74,7 +96,7 @@ namespace Network
                 for (auto &&j : filesArray)
                 {
                     const QJsonObject fileObj = j.toObject();
-                    const QString id = fileObj.value("code").toString();
+                    const QString id = fileObj.value("id").toString();
                     const QString name = fileObj.value("name").toString();
                     const int size = fileObj.value("path").toInteger();
                     files.push_back(new Model::File(id, name, size, connection));
@@ -86,10 +108,26 @@ namespace Network
         }
     }
 
+    void Client::sendFilesInfoToServer() const
+    {
+        if (!tcpSocket)
+        {
+            return;
+        }
+
+        QJsonObject json;
+        QJsonArray filesArray = Model::toJson(myFiles);
+        json["type"] = "files";
+        json["files"] = filesArray;
+        tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+
     void Client::handleConnected() const
     {
         qDebug() << "client connected";
         emit connected();
+
+        sendFilesInfoToServer();
     }
 
     void Client::handleReadyRead()

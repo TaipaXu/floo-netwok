@@ -13,6 +13,8 @@ Rectangle {
 
     required property Model.MyFile file
 
+    signal remove()
+
     RowLayout {
         id: rowLayout
         anchors.fill: parent
@@ -56,9 +58,7 @@ Rectangle {
         Button {
             text: qsTr("Remove")
 
-            onClicked: {
-
-            }
+            onClicked: root.remove()
         }
     }
 }

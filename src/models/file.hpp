@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QObject>
+#include <QJsonObject>
+#include <QJsonArray>
 
 namespace Model
 {
@@ -18,6 +20,7 @@ namespace Model
 
         const QString &getId() const;
         const QString &getName() const;
+        int getSize() const;
         QString getSizeName() const;
 
     private:
@@ -31,8 +34,16 @@ namespace Model
         return id;
     }
 
+    inline int File::getSize() const
+    {
+        return size;
+    }
+
     inline const QString &File::getName() const
     {
         return name;
     }
+
+    QJsonObject toJson(const File *file);
+    QJsonArray toJson(const QList<Model::File *> &files);
 } // namespace Model

@@ -12,4 +12,23 @@ namespace Model
     {
         return Utils::getReadableSize(size);
     }
+
+    QJsonObject toJson(const File *file)
+    {
+        QJsonObject json;
+        json["id"] = file->getId();
+        json["name"] = file->getName();
+        json["size"] = file->getSize();
+        return json;
+    }
+
+    QJsonArray toJson(const QList<Model::File *> &files)
+    {
+        QJsonArray json;
+        for (const auto &file : files)
+        {
+            json.append(toJson(file));
+        }
+        return json;
+    }
 } // namespace Model

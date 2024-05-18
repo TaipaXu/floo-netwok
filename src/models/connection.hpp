@@ -33,7 +33,7 @@ namespace Model
         Connection(const QString &address, QObject *parent = nullptr);
         ~Connection();
 
-        const QTcpSocket *const getTcpSocket() const;
+        QTcpSocket *const getTcpSocket() const;
         QString getAddress() const;
         QList<Model::File *> getFiles() const;
         void setFiles(const QList<Model::File *> &files);
@@ -59,7 +59,7 @@ namespace Model
         QList<Model::File *> files;
     };
 
-    inline const QTcpSocket *const Connection::getTcpSocket() const
+    inline QTcpSocket *const Connection::getTcpSocket() const
     {
         return link.tcpSocket;
     }

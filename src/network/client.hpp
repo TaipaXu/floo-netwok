@@ -2,17 +2,13 @@
 
 #include <QObject>
 #include <QAbstractSocket>
+#include "models/file.hpp"
+#include "models/myFile.hpp"
 #include "models/connection.hpp"
 
 QT_BEGIN_NAMESPACE
 class QTcpSocket;
 QT_END_NAMESPACE
-
-namespace Model
-{
-    class File;
-    class MyFile;
-} // namespace Model
 
 namespace Network
 {
@@ -20,6 +16,7 @@ namespace Network
     {
         Q_OBJECT
 
+        Q_PROPERTY(QList<Model::MyFile *> myFiles READ getMyFiles NOTIFY myFilesChanged)
         Q_PROPERTY(QList<Model::Connection *> connections READ getConnections NOTIFY connectionsChanged)
 
     public:
@@ -28,6 +25,9 @@ namespace Network
 
         Q_INVOKABLE void start(const QString &address, int port);
         Q_INVOKABLE void stop();
+        const QList<Model::MyFile *> &getMyFiles();
+        Q_INVOKABLE void addMyFiles(const QList<QUrl> &myFiles);
+        Q_INVOKABLE void removeMyFile(Model::MyFile *myFile);
         QList<Model::Connection *> getConnections() const;
 
     signals:
@@ -35,9 +35,11 @@ namespace Network
         void disconnected() const;
         void connectError() const;
         void connectionsChanged() const;
+        void myFilesChanged() const;
 
     private:
         void handleRequestFiles(const QJsonObject &ipFiles);
+        void sendFilesInfoToServer() const;
 
     private slots:
         void handleConnected() const;
@@ -46,9 +48,15 @@ namespace Network
         void handleDisconnected();
 
     private:
+        QList<Model::MyFile *> myFiles;
         QTcpSocket *tcpSocket;
         QList<Model::Connection *> connections;
     };
+
+    inline const QList<Model::MyFile *> &Client::getMyFiles()
+    {
+        return myFiles;
+    }
 
     inline QList<Model::Connection *> Client::getConnections() const
     {

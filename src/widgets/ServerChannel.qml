@@ -125,13 +125,17 @@ Rectangle {
                         Item { }
 
                         Repeater {
-                            model: root.channel.files
+                            model: network.myFiles
                             delegate: MyFile {
                                 required property Model.MyFile modelData
 
                                 Layout.preferredWidth: parent.width - 16
                                 Layout.alignment: Qt.AlignHCenter
                                 file: modelData
+
+                                onRemove: {
+                                    network.removeMyFile(modelData);
+                                }
                             }
                         }
                     }
@@ -185,7 +189,7 @@ Rectangle {
         }
         onDropped: (drop) => {
             dropArea.dragging = false;
-            root.channel.addFiles(drop.urls);
+            network.addMyFiles(drop.urls);
         }
 
         Rectangle {
@@ -198,6 +202,10 @@ Rectangle {
 
     Network.Server {
         id: network
+
+        onMyFilesChanged: {
+            console.log("Server Channel My Files Changed");
+        }
 
         onConnectionsChanged: {
             console.log("Server Channel Connections Changed");

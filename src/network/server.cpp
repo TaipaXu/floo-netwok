@@ -5,8 +5,7 @@
 #include <QJsonParseError>
 #include <QJsonObject>
 #include <QJsonArray>
-#include "models/file.hpp"
-#include "models/myFile.hpp"
+#include <QFileInfo>
 
 namespace Network
 {
@@ -60,6 +59,86 @@ namespace Network
         connections.clear();
     }
 
+    void Server::addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray)
+    {
+        qDebug() << "add client files";
+        Model::Connection *connection = nullptr;
+        for (Model::Connection *conn : connections)
+        {
+            if (conn->getTcpSocket() == socket)
+            {
+                connection = conn;
+                break;
+            }
+        }
+
+        if (connection)
+        {
+            QList<Model::File *> files;
+            for (const QJsonValue &fileValue : filesArray)
+            {
+                const QJsonObject fileObj = fileValue.toObject();
+                const QString id = fileObj.value("id").toString();
+                const QString name = fileObj.value("name").toString();
+                const int size = fileObj.value("path").toInteger();
+                files.push_back(new Model::File(id, name, size, connection));
+            }
+            connection->setFiles(files);
+            emit connectionsChanged();
+        }
+
+        broadcastFiles();
+    }
+
+    void Server::broadcastFiles() const
+    {
+        qDebug() << "broadcast files";
+        if (myFiles.empty() && connections.empty())
+        {
+            return;
+        }
+
+        QJsonObject json;
+        json["type"] = "files";
+        QJsonObject ipFiles;
+        ipFiles["server"] = Model::toJson(myFiles);
+        for (Model::Connection *connection : connections)
+        {
+            ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
+        }
+        json["files"] = ipFiles;
+
+        const QJsonDocument doc(json);
+        const QByteArray data = doc.toJson(QJsonDocument::Compact);
+        for (Model::Connection *connection : connections)
+        {
+            connection->getTcpSocket()->write(data);
+        }
+    }
+
+    void Server::addMyFiles(const QList<QUrl> &myFiles)
+    {
+        qDebug() << "Server::addMyFiles";
+        for (const QUrl &url : myFiles)
+        {
+            QFileInfo fileInfo(url.toLocalFile());
+            this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+        }
+
+        emit myFilesChanged();
+        broadcastFiles();
+    }
+
+    void Server::removeMyFile(Model::MyFile *myFile)
+    {
+        qDebug() << "Server::removeMyFile";
+        myFiles.removeOne(myFile);
+        myFile->deleteLater();
+
+        emit myFilesChanged();
+        broadcastFiles();
+    }
+
     void Server::handleNewConnection()
     {
         qDebug() << "server new connection";
@@ -68,6 +147,8 @@ namespace Network
         connect(socket, &QTcpSocket::disconnected, this, &Server::handleDisconnected);
         connections.push_back(new Model::Connection(socket, this));
         emit newConnection();
+
+        broadcastFiles();
     }
 
     void Server::handleReadyRead()
@@ -111,34 +192,7 @@ namespace Network
                                   connections.end());
             }
         }
-    }
 
-    void Server::addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray)
-    {
-        qDebug() << "add client files";
-        Model::Connection *connection = nullptr;
-        for (Model::Connection *conn : connections)
-        {
-            if (conn->getTcpSocket() == socket)
-            {
-                connection = conn;
-                break;
-            }
-        }
-
-        if (connection)
-        {
-            QList<Model::File *> files;
-            for (const QJsonValue &fileValue : filesArray)
-            {
-                const QJsonObject fileObj = fileValue.toObject();
-                const QString id = fileObj.value("code").toString();
-                const QString name = fileObj.value("name").toString();
-                const int size = fileObj.value("path").toInteger();
-                files.push_back(new Model::File(id, name, size, connection));
-            }
-            connection->setFiles(files);
-            emit connectionsChanged();
-        }
+        broadcastFiles();
     }
 } // namespace Network

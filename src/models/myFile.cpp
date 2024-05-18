@@ -6,4 +6,19 @@ namespace Model
         : File(path, name, size, parent), path{path}
     {
     }
+
+    MyFile::~MyFile()
+    {
+        qDebug() << "MyFile destructor";
+    }
+
+    QJsonArray toJson(const QList<Model::MyFile *> &files)
+    {
+        QJsonArray json;
+        for (const auto &file : files)
+        {
+            json.append(toJson(file));
+        }
+        return json;
+    }
 } // namespace Model
