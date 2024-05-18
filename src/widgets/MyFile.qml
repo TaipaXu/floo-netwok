@@ -13,7 +13,7 @@ Rectangle {
 
     required property Model.MyFile file
 
-    signal remove()
+    signal remove
 
     RowLayout {
         id: rowLayout

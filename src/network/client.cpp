@@ -6,6 +6,8 @@
 #include <QJsonArray>
 #include <QFileInfo>
 #include "utils/utils.hpp"
+#include "network/sendManager.hpp"
+#include "network/receiveManager.hpp"
 
 namespace Network
 {
@@ -69,6 +71,29 @@ namespace Network
         sendFilesInfoToServer();
     }
 
+    void Client::requestDownloadFile(Model::File *file)
+    {
+        qDebug() << "requestDownloadFile";
+        QJsonObject json;
+        json["type"] = "downloadFile";
+        json["id"] = file->getId();
+        tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+
+    void Client::sendFilesInfoToServer() const
+    {
+        if (!tcpSocket)
+        {
+            return;
+        }
+
+        QJsonObject json;
+        QJsonArray filesArray = Model::toJson(myFiles);
+        json["type"] = "files";
+        json["files"] = filesArray;
+        tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+
     void Client::handleRequestFiles(const QJsonObject &ipFiles)
     {
         qDebug() << "client request files" << ipFiles;
@@ -87,7 +112,7 @@ namespace Network
                 }
                 if (!connection)
                 {
-                    connection = new Model::Connection(i);
+                    connection = new Model::Connection(i, this);
                     connections.push_back(connection);
                 }
 
@@ -108,18 +133,28 @@ namespace Network
         }
     }
 
-    void Client::sendFilesInfoToServer() const
+    void Client::handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const
     {
-        if (!tcpSocket)
+        qDebug() << "client request prepare upload file" << fileId << reveiverIp;
+        auto file = std::find_if(myFiles.begin(), myFiles.end(), [fileId](Model::MyFile *myFile) {
+            return myFile->getId() == fileId;
+        });
+        if (file != myFiles.end())
         {
-            return;
+            const int port = SendManager::getInstance()->createSender((*file)->getPath());
+            QJsonObject json;
+            json["type"] = "readyToUpload";
+            json["ip"] = reveiverIp;
+            json["port"] = port;
+            json["id"] = fileId;
+            tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
         }
+    }
 
-        QJsonObject json;
-        QJsonArray filesArray = Model::toJson(myFiles);
-        json["type"] = "files";
-        json["files"] = filesArray;
-        tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    void Client::handleRequestUploadFileReady(const QString &ip, int port) const
+    {
+        qDebug() << "client request upload file ready" << ip << port;
+        ReceiveManager::getInstance()->createReceiver(ip, port);
     }
 
     void Client::handleConnected() const
@@ -144,6 +179,18 @@ namespace Network
             {
                 const QJsonObject ipFiles = obj["files"].toObject();
                 handleRequestFiles(ipFiles);
+            }
+            else if (type == "prepareUpload")
+            {
+                const QString fileId = obj["id"].toString();
+                const QString reveiverIp = obj["ip"].toString();
+                handleRequestPrepareUploadFile(fileId, reveiverIp);
+            }
+            else if (type == "uploadFileReady")
+            {
+                const QString senderIp = obj["ip"].toString();
+                const int port = obj["port"].toInt();
+                handleRequestUploadFileReady(senderIp, port);
             }
         }
     }

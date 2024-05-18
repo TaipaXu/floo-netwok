@@ -6,6 +6,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QFileInfo>
+#include "network/sendManager.hpp"
+#include "network/receiveManager.hpp"
 
 namespace Network
 {
@@ -59,6 +61,32 @@ namespace Network
         connections.clear();
     }
 
+    void Server::broadcastFiles() const
+    {
+        qDebug() << "broadcast files";
+        if (myFiles.empty() && connections.empty())
+        {
+            return;
+        }
+
+        QJsonObject json;
+        json["type"] = "files";
+        QJsonObject ipFiles;
+        ipFiles["server"] = Model::toJson(myFiles);
+        for (Model::Connection *connection : connections)
+        {
+            ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
+        }
+        json["files"] = ipFiles;
+
+        const QJsonDocument doc(json);
+        const QByteArray data = doc.toJson(QJsonDocument::Compact);
+        for (Model::Connection *connection : connections)
+        {
+            connection->getTcpSocket()->write(data);
+        }
+    }
+
     void Server::addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray)
     {
         qDebug() << "add client files";
@@ -90,29 +118,64 @@ namespace Network
         broadcastFiles();
     }
 
-    void Server::broadcastFiles() const
+    void Server::handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id)
     {
-        qDebug() << "broadcast files";
-        if (myFiles.empty() && connections.empty())
+        qDebug() << "handle client request download file";
+        for (auto &&file : myFiles)
         {
-            return;
+            if (file->getId() == id)
+            {
+                const int port = Network::SendManager::getInstance()->createSender(file->getPath());
+                QJsonObject json;
+                json["type"] = "uploadFileReady";
+                json["id"] = id;
+                json["ip"] = tcpServer->serverAddress().toString();
+                json["port"] = port;
+                clientSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                break;
+            }
         }
 
-        QJsonObject json;
-        json["type"] = "files";
-        QJsonObject ipFiles;
-        ipFiles["server"] = Model::toJson(myFiles);
         for (Model::Connection *connection : connections)
         {
-            ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
+            for (auto &&file : connection->getFiles())
+            {
+                if (file->getId() == id)
+                {
+                    QJsonObject json;
+                    json["type"] = "prepareUpload";
+                    json["id"] = id;
+                    json["ip"] = connection->getAddress();
+                    clientSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                    break;
+                }
+            }
         }
-        json["files"] = ipFiles;
+    }
 
-        const QJsonDocument doc(json);
-        const QByteArray data = doc.toJson(QJsonDocument::Compact);
-        for (Model::Connection *connection : connections)
+    void Server::handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
+    {
+        qDebug() << "handle client ready to upload file";
+        if (reveiverIp == "server")
         {
-            connection->getTcpSocket()->write(data);
+            qDebug() << "server ready to upload file" << senderIp << reveiverIp << port;
+            Network::ReceiveManager::getInstance()->createReceiver(senderIp, port);
+        }
+        else
+        {
+            for (Model::Connection *connection : connections)
+            {
+                if (connection->getAddress() == reveiverIp)
+                {
+                    QJsonObject json;
+                    json["type"] = "uploadFileReady";
+                    json["id"] = fileId;
+                    json["ip"] = senderIp;
+                    json["port"] = port;
+                    connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                    break;
+                }
+            }
         }
     }
 
@@ -137,6 +200,23 @@ namespace Network
 
         emit myFilesChanged();
         broadcastFiles();
+    }
+
+    void Server::requestDownloadFile(Model::File *file)
+    {
+        qDebug() << "Server::downloadFile";
+        for (Model::Connection *connection : connections)
+        {
+            if (connection->getFiles().contains(file))
+            {
+                QJsonObject json;
+                json["type"] = "prepareUpload";
+                json["id"] = file->getId();
+                json["ip"] = "server";
+                connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                break;
+            }
+        }
     }
 
     void Server::handleNewConnection()
@@ -170,6 +250,18 @@ namespace Network
                     qDebug() << "files";
                     const QJsonArray filesArray = obj.value("files").toArray();
                     addClientFiles(socket, filesArray);
+                }
+                else if (type == "downloadFile")
+                {
+                    const QString code = obj["id"].toString();
+                    handleClientRequestDownloadFile(socket, code);
+                }
+                else if (type == "readyToUpload")
+                {
+                    const QString reveiverIp = obj.value("ip").toString();
+                    const int port = obj.value("port").toInt();
+                    const QString fileId = obj.value("id").toString();
+                    handleClientReadyToUploadFile(socket->peerAddress().toString(), reveiverIp, port, fileId);
                 }
             }
         }

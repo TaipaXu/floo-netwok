@@ -28,6 +28,7 @@ namespace Network
         const QList<Model::MyFile *> &getMyFiles();
         Q_INVOKABLE void addMyFiles(const QList<QUrl> &myFiles);
         Q_INVOKABLE void removeMyFile(Model::MyFile *myFile);
+        Q_INVOKABLE void requestDownloadFile(Model::File *file);
         QList<Model::Connection *> getConnections() const;
 
     signals:
@@ -38,8 +39,10 @@ namespace Network
         void myFilesChanged() const;
 
     private:
-        void handleRequestFiles(const QJsonObject &ipFiles);
         void sendFilesInfoToServer() const;
+        void handleRequestFiles(const QJsonObject &ipFiles);
+        void handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const;
+        void handleRequestUploadFileReady(const QString &ip, int port) const;
 
     private slots:
         void handleConnected() const;

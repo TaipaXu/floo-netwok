@@ -133,9 +133,7 @@ Rectangle {
                                 Layout.alignment: Qt.AlignHCenter
                                 file: modelData
 
-                                onRemove: {
-                                    network.removeMyFile(modelData);
-                                }
+                                onRemove: network.removeMyFile(modelData)
                             }
                         }
                     }
@@ -164,6 +162,8 @@ Rectangle {
                                     Layout.preferredWidth: parent.width - 16
                                     Layout.alignment: Qt.AlignHCenter
                                     file: modelData
+
+                                    onDownload: network.requestDownloadFile(modelData)
                                 }
                             }
                         }

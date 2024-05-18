@@ -26,6 +26,14 @@ set(SOURCES
         network/server.cpp
         network/client.hpp
         network/client.cpp
+        network/sendManager.hpp
+        network/sendManager.cpp
+        network/receiveManager.hpp
+        network/receiveManager.cpp
+        network/sender.hpp
+        network/sender.cpp
+        network/receiver.hpp
+        network/receiver.cpp
 
         utils/utils.hpp
         utils/utils.cpp

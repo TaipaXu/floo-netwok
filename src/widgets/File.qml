@@ -12,6 +12,8 @@ Rectangle {
 
     required property Model.File file
 
+    signal download
+
     RowLayout {
         id: rowLayout
         anchors.fill: parent
@@ -48,9 +50,7 @@ Rectangle {
         Button {
             text: qsTr("Download")
 
-            onClicked: {
-
-            }
+            onClicked: root.download()
         }
     }
 }

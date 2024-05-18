@@ -17,7 +17,7 @@ namespace Network
     {
         Q_OBJECT
 
-        Q_PROPERTY(QList<Model::File *> myFiles READ getMyFiles NOTIFY myFilesChanged)
+        Q_PROPERTY(QList<Model::MyFile *> myFiles READ getMyFiles NOTIFY myFilesChanged)
         Q_PROPERTY(QList<Model::Connection *> connections READ getConnections NOTIFY connectionsChanged)
 
     public:
@@ -26,9 +26,10 @@ namespace Network
 
         Q_INVOKABLE bool start(const QString &address, int port);
         Q_INVOKABLE void stop();
-        const QList<Model::File *> &getMyFiles();
+        const QList<Model::MyFile *> &getMyFiles();
         Q_INVOKABLE void addMyFiles(const QList<QUrl> &myFiles);
         Q_INVOKABLE void removeMyFile(Model::MyFile *myFile);
+        Q_INVOKABLE void requestDownloadFile(Model::File *file);
         QList<Model::Connection *> getConnections() const;
 
     signals:
@@ -38,8 +39,10 @@ namespace Network
         void myFilesChanged() const;
 
     private:
-        void addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray);
         void broadcastFiles() const;
+        void addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray);
+        void handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id);
+        void handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId);
 
     private slots:
         void handleNewConnection();
@@ -47,12 +50,12 @@ namespace Network
         void handleDisconnected();
 
     private:
-        QList<Model::File *> myFiles;
+        QList<Model::MyFile *> myFiles;
         QTcpServer *tcpServer;
         QList<Model::Connection *> connections;
     };
 
-    inline const QList<Model::File *> &Server::getMyFiles()
+    inline const QList<Model::MyFile *> &Server::getMyFiles()
     {
         return myFiles;
     }
