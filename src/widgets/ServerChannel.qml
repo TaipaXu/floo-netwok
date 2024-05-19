@@ -209,6 +209,19 @@ Rectangle {
 
         onConnectionsChanged: {
             console.log("Server Channel Connections Changed");
+            if (stackView.currentIndex !== 0) {
+                if (network.connections.length === 0) {
+                    stackView.currentIndex = 0;
+                } else if (stackView.currentIndex < network.connections.length) {
+                    stackView.currentIndex = network.connections.length;
+                }
+            }
+        }
+
+        onDisconnected: {
+            console.log("Server Channel Disconnected");
+            startButton.enabled = true;
+            stopButton.enabled = false;
         }
     }
 

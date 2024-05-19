@@ -1,4 +1,5 @@
 #include "./client.hpp"
+#include <QTimer>
 #include <QTcpSocket>
 #include <QJsonDocument>
 #include <QJsonParseError>
@@ -46,6 +47,12 @@ namespace Network
             tcpSocket->deleteLater();
             tcpSocket = nullptr;
         }
+
+        for (auto &&connection : connections)
+        {
+            connection->deleteLater();
+        }
+        connections.clear();
     }
 
     void Client::addMyFiles(const QList<QUrl> &myFiles)
@@ -112,7 +119,7 @@ namespace Network
                 }
                 if (!connection)
                 {
-                    connection = new Model::Connection(i, this);
+                    connection = new Model::Connection(i);
                     connections.push_back(connection);
                 }
 
@@ -211,5 +218,12 @@ namespace Network
             tcpSocket->deleteLater();
             tcpSocket = nullptr;
         }
+
+        for (auto &&connection : connections)
+        {
+            connection->deleteLater();
+        }
+        connections.clear();
+        emit connectionsChanged();
     }
 } // namespace Network

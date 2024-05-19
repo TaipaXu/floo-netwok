@@ -1,27 +1,25 @@
 #include "./connection.hpp"
 #include <QTcpSocket>
+#include "models/file.hpp"
 
 namespace Model
 {
     Connection::Connection(QTcpSocket *tcpSocket, QObject *parent)
-        : QObject(parent), linkType{LinkType::TcpSocket}
+        : QObject(parent), linkType{LinkType::TcpSocket}, tcpSocket{tcpSocket}
     {
-        link.tcpSocket = tcpSocket;
     }
 
     Connection::Connection(const QString &address, QObject *parent)
-        : QObject(parent), linkType{LinkType::Address}
+        : QObject(parent), linkType{LinkType::Address}, tcpSocket{nullptr}, address{address}
     {
-        link.address = address;
     }
 
     Connection::~Connection()
     {
         qDebug() << "connection destructor";
-        if (linkType == LinkType::TcpSocket && link.tcpSocket)
+        for (auto &&file : files)
         {
-            link.tcpSocket->deleteLater();
-            link.tcpSocket = nullptr;
+            file->deleteLater();
         }
     }
 
@@ -29,11 +27,11 @@ namespace Model
     {
         if (linkType == LinkType::TcpSocket)
         {
-            return link.tcpSocket->peerAddress().toString();
+            return tcpSocket->peerAddress().toString();
         }
         else
         {
-            return link.address;
+            return address;
         }
     }
 

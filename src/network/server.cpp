@@ -19,10 +19,7 @@ namespace Network
     Server::~Server()
     {
         qDebug() << "server destructor";
-        if (tcpServer)
-        {
-            stop();
-        }
+        stop();
     }
 
     bool Server::start(const QString &address, int port)
@@ -57,8 +54,14 @@ namespace Network
             tcpServer = nullptr;
         }
 
-        qDeleteAll(connections);
+        for (auto &&connection : connections)
+        {
+            connection->deleteLater();
+        }
         connections.clear();
+
+        emit connectionsChanged();
+        broadcastFiles();
     }
 
     void Server::broadcastFiles() const
@@ -225,7 +228,7 @@ namespace Network
         QTcpSocket *const socket = tcpServer->nextPendingConnection();
         connect(socket, &QTcpSocket::readyRead, this, &Server::handleReadyRead);
         connect(socket, &QTcpSocket::disconnected, this, &Server::handleDisconnected);
-        connections.push_back(new Model::Connection(socket, this));
+        connections.push_back(new Model::Connection(socket));
         emit newConnection();
 
         broadcastFiles();
@@ -278,13 +281,17 @@ namespace Network
             if (socket)
             {
                 socket->deleteLater();
-                connections.erase(std::remove_if(connections.begin(), connections.end(), [socket](Model::Connection *connection) {
-                                      return connection->getTcpSocket() == socket;
-                                  }),
-                                  connections.end());
+                auto it = std::remove_if(connections.begin(), connections.end(), [socket](Model::Connection *connection) {
+                    return connection->getTcpSocket() == socket;
+                });
+                if (it != connections.end())
+                {
+                    connections.erase(it, connections.end());
+                    (*it)->deleteLater();
+                    emit connectionsChanged();
+                    broadcastFiles();
+                }
             }
         }
-
-        broadcastFiles();
     }
 } // namespace Network

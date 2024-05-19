@@ -44,24 +44,14 @@ namespace Model
 
     private:
         LinkType linkType;
-        union Link
-        {
-            QTcpSocket *tcpSocket;
-            QString address;
-
-            Link()
-            {
-            }
-            ~Link()
-            {
-            }
-        } link;
+        QTcpSocket *tcpSocket = nullptr;
+        QString address;
         QList<Model::File *> files;
     };
 
     inline QTcpSocket *const Connection::getTcpSocket() const
     {
-        return link.tcpSocket;
+        return tcpSocket;
     }
 
     inline QList<Model::File *> Connection::getFiles() const
