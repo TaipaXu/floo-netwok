@@ -10,15 +10,28 @@ namespace Network
     {
         Q_OBJECT
 
+        Q_PROPERTY(QList<Sender *> senders READ getSenders NOTIFY sendersChanged)
+
     public:
         static SendManager *getInstance();
         ~SendManager();
 
         int createSender(const QString &path);
 
+    signals:
+        void sendersChanged() const;
+
     private:
         SendManager() = default;
 
+        const QList<Sender *> &getSenders() const;
+
+    private:
         QList<Sender *> senders;
     };
+
+    inline const QList<Sender *> &SendManager::getSenders() const
+    {
+        return senders;
+    }
 } // namespace Network

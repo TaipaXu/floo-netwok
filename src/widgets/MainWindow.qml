@@ -121,6 +121,16 @@ ApplicationWindow {
                 }
             }
 
+            Sends {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+
+            Receives {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+
             function getCurrentIndex() {
                 switch (navbar.currentType) {
                     case Navbar.Type.Home:

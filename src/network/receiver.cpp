@@ -4,6 +4,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QStandardPaths>
+#include "utils/utils.hpp"
 
 namespace Network
 {
@@ -23,6 +24,41 @@ namespace Network
         connect(tcpSocket, &QTcpSocket::disconnected, this, &Receiver::handleDisconnected);
         connect(tcpSocket, &QTcpSocket::errorOccurred, this, &Receiver::handleError);
         tcpSocket->connectToHost(ip, port);
+    }
+
+    QString Receiver::getStatusName() const
+    {
+        switch (status)
+        {
+        case Status::SettingUp:
+            return tr("Setting up");
+        case Status::Receiving:
+            return tr("Receiving");
+        case Status::Finished:
+            return tr("Finished");
+        case Status::Canceled:
+            return tr("Canceled");
+        case Status::Error:
+            return tr("Error");
+        }
+    }
+
+    QString Receiver::getName() const
+    {
+        if (localFile)
+        {
+            return QFileInfo(*localFile).fileName();
+        }
+        return QString();
+    }
+
+    QString Receiver::getSize() const
+    {
+        if (localFile)
+        {
+            return Utils::getReadableSize(localFile->size());
+        }
+        return QString();
     }
 
     void Receiver::deleteTcpSocket()
@@ -53,6 +89,8 @@ namespace Network
                 QString filePath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/" + QString(name);
                 filePath = QDir::toNativeSeparators(filePath);
                 localFile = new QFile(filePath, this);
+                emit nameChanged();
+                emit sizeChanged();
                 if (!localFile->open(QFile::WriteOnly))
                 {
                     return;

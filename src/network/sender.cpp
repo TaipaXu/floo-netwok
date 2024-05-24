@@ -3,11 +3,12 @@
 #include <QTcpSocket>
 #include <QFile>
 #include <QFileInfo>
+#include "utils/utils.hpp"
 
 namespace Network
 {
     Sender::Sender(QObject *parent)
-        : QObject(parent), status{Status::SettingUp}, tcpServer{nullptr}, totalBytes{0}, bytesWritten{0}, bytesToWrite{0}, payloadSize{64 * 1024}, outBlock{nullptr}
+        : QObject(parent), status{Status::SettingUp}, tcpServer{nullptr}, localFile{nullptr}, totalBytes{0}, bytesWritten{0}, bytesToWrite{0}, payloadSize{64 * 1024}, outBlock{nullptr}
     {
     }
 
@@ -18,6 +19,8 @@ namespace Network
     int Sender::startSendFile(const QString &path)
     {
         localFile = new QFile(path, this);
+        emit nameChanged();
+        emit sizeChanged();
         tcpServer = new QTcpServer(this);
         connect(tcpServer, &QTcpServer::newConnection, this, &Sender::handleNewConnection);
         int port = 1000;
@@ -26,6 +29,48 @@ namespace Network
             port++;
         }
         return port;
+    }
+
+    QString Sender::getStatusName() const
+    {
+        switch (status)
+        {
+        case Status::SettingUp:
+            return tr("Setting up");
+        case Status::Sending:
+            return tr("Sending");
+        case Status::Finished:
+            return tr("Finished");
+        case Status::Canceled:
+            return tr("Canceled");
+        case Status::Error:
+            return tr("Error");
+        }
+    }
+
+    QString Sender::getName() const
+    {
+        if (localFile)
+        {
+            const QFileInfo info(*localFile);
+            return info.fileName();
+        }
+        else
+        {
+            return QString();
+        }
+    }
+
+    QString Sender::getSize() const
+    {
+        if (localFile)
+        {
+            return Utils::getReadableSize(localFile->size());
+        }
+        else
+        {
+            return QString();
+        }
     }
 
     void Sender::deleteTcpServer()

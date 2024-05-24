@@ -116,7 +116,6 @@ Rectangle {
                     topMargin: 0
                     clip: true
 
-
                     ColumnLayout {
                         id: content
                         width: parent.width

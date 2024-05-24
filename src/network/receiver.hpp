@@ -13,6 +13,11 @@ namespace Network
     {
         Q_OBJECT
 
+        Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
+        Q_PROPERTY(QString statusName READ getStatusName NOTIFY statusChanged)
+        Q_PROPERTY(QString name READ getName NOTIFY nameChanged)
+        Q_PROPERTY(QString size READ getSize NOTIFY sizeChanged)
+
     public:
         enum class Status
         {
@@ -32,11 +37,17 @@ namespace Network
     signals:
         void progressChanged(long long bytesReceived, long long totalBytes) const;
         void statusChanged(Status status) const;
+        void nameChanged() const;
+        void sizeChanged() const;
         void fileReceived() const;
         void fileReceiveError() const;
         void fileReceiveDisconnected() const;
 
     private:
+        Status getStatus() const;
+        QString getStatusName() const;
+        QString getName() const;
+        QString getSize() const;
         void deleteTcpSocket();
 
     private slots:
@@ -53,4 +64,9 @@ namespace Network
         long long fileNameSize;
         QByteArray inBlock;
     };
+
+    inline Receiver::Status Receiver::getStatus() const
+    {
+        return status;
+    }
 } // namespace Network

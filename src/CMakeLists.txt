@@ -78,4 +78,8 @@ qt_add_qml_module(${TARGET}
         "widgets/Tag.qml"
         "widgets/MyFile.qml"
         "widgets/File.qml"
+        "widgets/Sends.qml"
+        "widgets/Receives.qml"
+        "widgets/Sender.qml"
+        "widgets/Receiver.qml"
 )
