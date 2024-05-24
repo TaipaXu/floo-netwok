@@ -8,8 +8,6 @@ Rectangle {
     color: "transparent"
 
     required property Network.Sender sender
-    property int bytesReceived: 1
-    property int totalBytes : 1
 
     component InfoLabel: Label {
         Layout.preferredWidth: 100
@@ -30,31 +28,11 @@ Rectangle {
 
         ProgressBar {
             Layout.fillWidth: true
-            from: 0
-            to: totalBytes
-            value: bytesReceived
+            value: root.sender.progress
         }
 
         InfoLabel {
             text: sender.statusName
-        }
-    }
-
-    Connections {
-        target: sender
-
-        function onProgressChanged(bytesReceived, totalBytes) {
-            console.log("onProgressChanged: ", bytesReceived, totalBytes);
-            root.bytesReceived = bytesReceived;
-            root.totalBytes = totalBytes;
-        }
-
-        function onStatusChanged(status) {
-            console.log("onStatusChanged: ", status);
-            if (status === Network.Sender.Status.Finished) {
-                root.bytesReceived = 1;
-                root.totalBytes = 1;
-            }
         }
     }
 }

@@ -73,6 +73,11 @@ namespace Network
         }
     }
 
+    double Sender::getProgress() const
+    {
+        return totalBytes == 0 ? 0 : static_cast<double>(totalBytes - bytesToWrite) / totalBytes;
+    }
+
     void Sender::deleteTcpServer()
     {
         if (tcpServer)
@@ -107,17 +112,22 @@ namespace Network
         QTcpSocket *const socket = qobject_cast<QTcpSocket *>(sender());
         if (bytesToWrite > 0)
         {
+            if (status != Status::Sending)
+            {
+                status = Status::Sending;
+                emit statusChanged();
+            }
             outBlock = localFile->read(std::min(bytesToWrite, payloadSize));
             bytesWritten = socket->write(outBlock);
             bytesToWrite -= bytesWritten;
             outBlock.resize(0);
-            emit progressChanged(totalBytes - bytesToWrite, totalBytes);
+            emit progressChanged();
         }
         else
         {
             localFile->close();
             status = Status::Finished;
-            emit statusChanged(Status::Finished);
+            emit statusChanged();
             emit fileSendFinished();
 
             deleteTcpServer();
@@ -129,7 +139,7 @@ namespace Network
         deleteTcpServer();
         status = Status::Error;
         emit fileSendError();
-        emit statusChanged(Status::Error);
+        emit statusChanged();
     }
 
     void Sender::handleDisconnected()

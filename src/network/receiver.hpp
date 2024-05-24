@@ -17,6 +17,7 @@ namespace Network
         Q_PROPERTY(QString statusName READ getStatusName NOTIFY statusChanged)
         Q_PROPERTY(QString name READ getName NOTIFY nameChanged)
         Q_PROPERTY(QString size READ getSize NOTIFY sizeChanged)
+        Q_PROPERTY(double progress READ getProgress NOTIFY progressChanged)
 
     public:
         enum class Status
@@ -35,8 +36,8 @@ namespace Network
         void startReceiveFile(const QString &ip, int port);
 
     signals:
-        void progressChanged(long long bytesReceived, long long totalBytes) const;
-        void statusChanged(Status status) const;
+        void progressChanged() const;
+        void statusChanged() const;
         void nameChanged() const;
         void sizeChanged() const;
         void fileReceived() const;
@@ -48,6 +49,7 @@ namespace Network
         QString getStatusName() const;
         QString getName() const;
         QString getSize() const;
+        double getProgress() const;
         void deleteTcpSocket();
 
     private slots:

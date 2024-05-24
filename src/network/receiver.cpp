@@ -54,11 +54,12 @@ namespace Network
 
     QString Receiver::getSize() const
     {
-        if (localFile)
-        {
-            return Utils::getReadableSize(localFile->size());
-        }
-        return QString();
+        return Utils::getReadableSize(totalBytes);
+    }
+
+    double Receiver::getProgress() const
+    {
+        return totalBytes == 0 ? 0 : static_cast<double>(bytesReceived) / totalBytes;
     }
 
     void Receiver::deleteTcpSocket()
@@ -80,6 +81,7 @@ namespace Network
             {
                 in >> totalBytes >> fileNameSize;
                 bytesReceived += sizeof(long long) * 2;
+                emit sizeChanged();
             }
             if ((tcpSocket->bytesAvailable() >= fileNameSize) && (fileNameSize != 0))
             {
@@ -89,8 +91,9 @@ namespace Network
                 QString filePath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/" + QString(name);
                 filePath = QDir::toNativeSeparators(filePath);
                 localFile = new QFile(filePath, this);
+                status = Status::Receiving;
+                emit statusChanged();
                 emit nameChanged();
-                emit sizeChanged();
                 if (!localFile->open(QFile::WriteOnly))
                 {
                     return;
@@ -108,7 +111,7 @@ namespace Network
             localFile->write(inBlock);
             inBlock.resize(0);
 
-            emit progressChanged(bytesReceived, totalBytes);
+            emit progressChanged();
         }
         if (bytesReceived == totalBytes)
         {
@@ -117,7 +120,7 @@ namespace Network
 
             status = Status::Finished;
             emit fileReceived();
-            emit statusChanged(Status::Finished);
+            emit statusChanged();
         }
     }
 
@@ -126,7 +129,7 @@ namespace Network
         deleteTcpSocket();
         status = Status::Error;
         emit fileReceiveError();
-        emit statusChanged(Status::Error);
+        emit statusChanged();
     }
 
     void Receiver::handleDisconnected()
