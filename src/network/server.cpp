@@ -12,7 +12,7 @@
 namespace Network
 {
     Server::Server(QObject *parent)
-        : QObject(parent), tcpServer{nullptr}
+        : QObject(parent), status{Status::Unconnected}, tcpServer{nullptr}
     {
     }
 
@@ -25,6 +25,8 @@ namespace Network
     bool Server::start(const QString &address, int port)
     {
         qDebug() << "start" << address << port;
+        status = Status::Connecting;
+        emit statusChanged();
         if (!tcpServer)
         {
             tcpServer = new QTcpServer(this);
@@ -38,11 +40,14 @@ namespace Network
         if (result)
         {
             qDebug() << "Server started at" << address << port;
+            status = Status::Connected;
         }
         else
         {
             qDebug() << "Server start failed";
+            status = Status::Unconnected;
         }
+        emit statusChanged();
         return result;
     }
 
@@ -60,6 +65,8 @@ namespace Network
         }
         connections.clear();
 
+        status = Status::Unconnected;
+        emit statusChanged();
         emit connectionsChanged();
         broadcastFiles();
     }

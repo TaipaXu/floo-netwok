@@ -38,6 +38,8 @@ namespace Network
             connect(tcpSocket, &QTcpSocket::disconnected, this, &Client::handleDisconnected);
         }
         tcpSocket->connectToHost(address, port);
+        status = Status::Connecting;
+        emit statusChanged();
     }
 
     void Client::stop()
@@ -164,9 +166,11 @@ namespace Network
         ReceiveManager::getInstance()->createReceiver(ip, port);
     }
 
-    void Client::handleConnected() const
+    void Client::handleConnected()
     {
         qDebug() << "client connected";
+        status = Status::Connected;
+        emit statusChanged();
         emit connected();
 
         sendFilesInfoToServer();
@@ -202,15 +206,19 @@ namespace Network
         }
     }
 
-    void Client::handleError(QAbstractSocket::SocketError socketError) const
+    void Client::handleError(QAbstractSocket::SocketError socketError)
     {
         qDebug() << "client error" << socketError;
+        status = Status::Unconnected;
+        emit statusChanged();
         emit connectError();
     }
 
     void Client::handleDisconnected()
     {
         qDebug() << "client disconnected";
+        status = Status::Unconnected;
+        emit statusChanged();
         emit disconnected();
 
         if (tcpSocket)

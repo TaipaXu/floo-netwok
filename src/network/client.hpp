@@ -16,8 +16,18 @@ namespace Network
     {
         Q_OBJECT
 
+        Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
         Q_PROPERTY(QList<Model::MyFile *> myFiles READ getMyFiles NOTIFY myFilesChanged)
         Q_PROPERTY(QList<Model::Connection *> connections READ getConnections NOTIFY connectionsChanged)
+
+    public:
+        enum class Status
+        {
+            Unconnected,
+            Connected,
+            Connecting,
+        };
+        Q_ENUM(Status)
 
     public:
         Client(QObject *parent = nullptr);
@@ -32,6 +42,7 @@ namespace Network
         QList<Model::Connection *> getConnections() const;
 
     signals:
+        void statusChanged() const;
         void connected() const;
         void disconnected() const;
         void connectError() const;
@@ -39,18 +50,20 @@ namespace Network
         void myFilesChanged() const;
 
     private:
+        Status getStatus() const;
         void sendFilesInfoToServer() const;
         void handleRequestFiles(const QJsonObject &ipFiles);
         void handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const;
         void handleRequestUploadFileReady(const QString &ip, int port) const;
 
     private slots:
-        void handleConnected() const;
+        void handleConnected();
         void handleReadyRead();
-        void handleError(QAbstractSocket::SocketError socketError) const;
+        void handleError(QAbstractSocket::SocketError socketError);
         void handleDisconnected();
 
     private:
+        Status status;
         QList<Model::MyFile *> myFiles;
         QTcpSocket *tcpSocket;
         QList<Model::Connection *> connections;
@@ -64,5 +77,10 @@ namespace Network
     inline QList<Model::Connection *> Client::getConnections() const
     {
         return connections;
+    }
+
+    inline Client::Status Client::getStatus() const
+    {
+        return status;
     }
 } // namespace Network

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Qt.labs.platform
 import model.channel as Model
 import model.myFile as Model
 import model.file as Model
@@ -36,26 +37,17 @@ Rectangle {
             Button {
                 id: startButton
                 text: qsTr("Start")
+                enabled: network.status === Network.Client.Unconnected
 
-                onClicked: {
-                    startButton.enabled = false;
-                    stopButton.enabled = true;
-
-                    network.start(root.channel.address, root.channel.port);
-                }
+                onClicked: network.start(root.channel.address, root.channel.port)
             }
 
             Button {
                 id: stopButton
                 text: qsTr("Stop")
-                enabled: false
+                enabled: network.status === Network.Client.Connected
 
-                onClicked: {
-                    startButton.enabled = true;
-                    stopButton.enabled = false;
-
-                    network.stop();
-                }
+                onClicked: network.stop()
             }
         }
 
@@ -214,9 +206,17 @@ Rectangle {
 
         onDisconnected: {
             console.log("Client Channel Disconnected");
-            startButton.enabled = true;
-            stopButton.enabled = false;
         }
+
+        onConnectError: {
+            messageDialog.open();
+        }
+    }
+
+    MessageDialog {
+        id: messageDialog
+        text: qsTr("Failed to connect to server!")
+        buttons: MessageDialog.Ok
     }
 
     Component.onDestruction: console.log("Client Channel Destruction Beginning!")
