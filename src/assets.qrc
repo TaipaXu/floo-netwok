@@ -15,5 +15,9 @@
         <file alias="upload-active">./assets/images/upload-active.png</file>
         <file alias="download">./assets/images/download.png</file>
         <file alias="download-active">./assets/images/download-active.png</file>
+
+        <file alias="browser">./assets/images/browser.png</file>
+        <file alias="browser-active">./assets/images/browser-active.png</file>
+        <file alias="copy">./assets/images/copy.png</file>
     </qresource>
 </RCC>

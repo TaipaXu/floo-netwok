@@ -9,6 +9,8 @@
 QT_BEGIN_NAMESPACE
 class QTcpServer;
 class QTcpSocket;
+class QWebSocketServer;
+class QWebSocket;
 QT_END_NAMESPACE
 
 namespace Network
@@ -17,7 +19,8 @@ namespace Network
     {
         Q_OBJECT
 
-        Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
+        Q_PROPERTY(Status tcpStatus READ getTcpStatus NOTIFY tcpStatusChanged)
+        Q_PROPERTY(Status wsStatus READ getWsStatus NOTIFY wsStatusChanged)
         Q_PROPERTY(QList<Model::MyFile *> myFiles READ getMyFiles NOTIFY myFilesChanged)
         Q_PROPERTY(QList<Model::Connection *> connections READ getConnections NOTIFY connectionsChanged)
 
@@ -35,7 +38,9 @@ namespace Network
         ~Server();
 
         Q_INVOKABLE bool start(const QString &address, int port);
+        Q_INVOKABLE bool startWs(const QString &address, int port);
         Q_INVOKABLE void stop();
+        Q_INVOKABLE void stopWs();
         const QList<Model::MyFile *> &getMyFiles();
         Q_INVOKABLE void addMyFiles(const QList<QUrl> &myFiles);
         Q_INVOKABLE void removeMyFile(Model::MyFile *myFile);
@@ -43,28 +48,34 @@ namespace Network
         QList<Model::Connection *> getConnections() const;
 
     signals:
-        void statusChanged() const;
-        void newConnection() const;
-        void disconnected() const;
+        void tcpStatusChanged() const;
+        void wsStatusChanged() const;
         void connectionsChanged() const;
         void myFilesChanged() const;
 
     private:
-        Status getStatus() const;
-        void broadcastFiles() const;
+        Status getTcpStatus() const;
+        Status getWsStatus() const;
+        void broadcastFilesToTcp() const;
+        void broadcastFilesToWs() const;
         void addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray);
         void handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id);
         void handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId);
 
     private slots:
-        void handleNewConnection();
-        void handleReadyRead();
-        void handleDisconnected();
+        void handleTcpNewConnection();
+        void handleTcpReadyRead();
+        void handleTcpDisconnected();
+        void handleWsNewConnection();
+        void handleWsTextMessageReceived(const QString &message);
+        void handleWsDisconnected();
 
     private:
-        Status status;
-        QList<Model::MyFile *> myFiles;
+        Status tcpStatus;
+        Status wsStatus;
         QTcpServer *tcpServer;
+        QWebSocketServer *wsServer;
+        QList<Model::MyFile *> myFiles;
         QList<Model::Connection *> connections;
     };
 
@@ -78,8 +89,13 @@ namespace Network
         return connections;
     }
 
-    inline Server::Status Server::getStatus() const
+    inline Server::Status Server::getTcpStatus() const
     {
-        return status;
+        return tcpStatus;
+    }
+
+    inline Server::Status Server::getWsStatus() const
+    {
+        return wsStatus;
     }
 } // namespace Network

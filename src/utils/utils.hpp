@@ -16,4 +16,6 @@ public:
     static bool isLocalAddress(const QString &address);
 
     static QString getReadableSize(long long int size);
+
+    Q_INVOKABLE static void copyToClipboard(const QString &text);
 };

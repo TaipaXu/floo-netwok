@@ -1,11 +1,17 @@
 #include "./connection.hpp"
 #include <QTcpSocket>
+#include <QWebSocket>
 #include "models/file.hpp"
 
 namespace Model
 {
     Connection::Connection(QTcpSocket *tcpSocket, QObject *parent)
         : QObject(parent), linkType{LinkType::TcpSocket}, tcpSocket{tcpSocket}
+    {
+    }
+
+    Connection::Connection(QWebSocket *wsSocket, QObject *parent)
+        : QObject(parent), linkType{LinkType::WSSocket}, wsSocket{wsSocket}
     {
     }
 
@@ -25,9 +31,14 @@ namespace Model
 
     QString Connection::getAddress() const
     {
+        qDebug() << "getAddress";
         if (linkType == LinkType::TcpSocket)
         {
             return tcpSocket->peerAddress().toString();
+        }
+        else if (linkType == LinkType::WSSocket)
+        {
+            return wsSocket->peerAddress().toString();
         }
         else
         {

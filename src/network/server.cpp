@@ -1,6 +1,8 @@
 #include "./server.hpp"
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QWebSocketServer>
+#include <QWebSocket>
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QJsonObject>
@@ -12,7 +14,7 @@
 namespace Network
 {
     Server::Server(QObject *parent)
-        : QObject(parent), status{Status::Unconnected}, tcpServer{nullptr}
+        : QObject(parent), tcpStatus{Status::Unconnected}, wsStatus{Status::Unconnected}, tcpServer{nullptr}, wsServer{nullptr}
     {
     }
 
@@ -25,12 +27,12 @@ namespace Network
     bool Server::start(const QString &address, int port)
     {
         qDebug() << "start" << address << port;
-        status = Status::Connecting;
-        emit statusChanged();
+        tcpStatus = Status::Connecting;
+        emit tcpStatusChanged();
         if (!tcpServer)
         {
             tcpServer = new QTcpServer(this);
-            connect(tcpServer, &QTcpServer::newConnection, this, &Server::handleNewConnection);
+            connect(tcpServer, &QTcpServer::newConnection, this, &Server::handleTcpNewConnection);
             connect(tcpServer, &QTcpServer::acceptError, [this](QAbstractSocket::SocketError socketError) {
                 qDebug() << "server accept error" << socketError;
             });
@@ -40,14 +42,43 @@ namespace Network
         if (result)
         {
             qDebug() << "Server started at" << address << port;
-            status = Status::Connected;
+            tcpStatus = Status::Connected;
         }
         else
         {
             qDebug() << "Server start failed";
-            status = Status::Unconnected;
+            tcpStatus = Status::Unconnected;
         }
-        emit statusChanged();
+        emit tcpStatusChanged();
+        return result;
+    }
+
+    bool Server::startWs(const QString &address, int port)
+    {
+        qDebug() << "start ws" << address << port;
+        wsStatus = Status::Connecting;
+        emit wsStatusChanged();
+        if (!wsServer)
+        {
+            wsServer = new QWebSocketServer("Server", QWebSocketServer::NonSecureMode, this);
+            connect(wsServer, &QWebSocketServer::newConnection, this, &Server::handleWsNewConnection);
+            connect(wsServer, &QWebSocketServer::serverError, [this](QWebSocketProtocol::CloseCode closeCode) {
+                qDebug() << "ws server error" << closeCode;
+            });
+        }
+
+        bool result = wsServer->listen(QHostAddress(address), port);
+        if (result)
+        {
+            qDebug() << "Server ws started at" << address << port;
+            wsStatus = Status::Connected;
+        }
+        else
+        {
+            qDebug() << "Server ws start failed";
+            wsStatus = Status::Unconnected;
+        }
+        emit wsStatusChanged();
         return result;
     }
 
@@ -65,13 +96,36 @@ namespace Network
         }
         connections.clear();
 
-        status = Status::Unconnected;
-        emit statusChanged();
+        tcpStatus = Status::Unconnected;
+        emit tcpStatusChanged();
         emit connectionsChanged();
-        broadcastFiles();
+        broadcastFilesToTcp();
     }
 
-    void Server::broadcastFiles() const
+    void Server::stopWs()
+    {
+        if (wsServer)
+        {
+            wsServer->deleteLater();
+            wsServer = nullptr;
+        }
+
+        for (auto &&connection : connections)
+        {
+            if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+            {
+                connection->deleteLater();
+            }
+            connections.removeOne(connection);
+        }
+
+        wsStatus = Status::Unconnected;
+        emit wsStatusChanged();
+        emit connectionsChanged();
+        broadcastFilesToWs();
+    }
+
+    void Server::broadcastFilesToTcp() const
     {
         qDebug() << "broadcast files";
         if (myFiles.empty() && connections.empty())
@@ -93,7 +147,39 @@ namespace Network
         const QByteArray data = doc.toJson(QJsonDocument::Compact);
         for (Model::Connection *connection : connections)
         {
-            connection->getTcpSocket()->write(data);
+            if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
+            {
+                connection->getTcpSocket()->write(data);
+            }
+        }
+    }
+
+    void Server::broadcastFilesToWs() const
+    {
+        qDebug() << "broadcast files to ws";
+        if (myFiles.empty() && connections.empty())
+        {
+            return;
+        }
+
+        QJsonObject json;
+        json["type"] = "files";
+        QJsonObject ipFiles;
+        ipFiles["server"] = Model::toJson(myFiles);
+        // for (Model::Connection *connection : connections)
+        // {
+        //     ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
+        // }
+        json["files"] = ipFiles;
+
+        const QJsonDocument doc(json);
+        const QByteArray data = doc.toJson(QJsonDocument::Compact);
+        for (Model::Connection *connection : connections)
+        {
+            if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+            {
+                connection->getWsSocket()->sendTextMessage(data);
+            }
         }
     }
 
@@ -125,7 +211,7 @@ namespace Network
             emit connectionsChanged();
         }
 
-        broadcastFiles();
+        broadcastFilesToTcp();
     }
 
     void Server::handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id)
@@ -199,7 +285,8 @@ namespace Network
         }
 
         emit myFilesChanged();
-        broadcastFiles();
+        broadcastFilesToTcp();
+        broadcastFilesToWs();
     }
 
     void Server::removeMyFile(Model::MyFile *myFile)
@@ -209,7 +296,7 @@ namespace Network
         myFile->deleteLater();
 
         emit myFilesChanged();
-        broadcastFiles();
+        broadcastFilesToTcp();
     }
 
     void Server::requestDownloadFile(Model::File *file)
@@ -229,19 +316,19 @@ namespace Network
         }
     }
 
-    void Server::handleNewConnection()
+    void Server::handleTcpNewConnection()
     {
         qDebug() << "server new connection";
         QTcpSocket *const socket = tcpServer->nextPendingConnection();
-        connect(socket, &QTcpSocket::readyRead, this, &Server::handleReadyRead);
-        connect(socket, &QTcpSocket::disconnected, this, &Server::handleDisconnected);
+        connect(socket, &QTcpSocket::readyRead, this, &Server::handleTcpReadyRead);
+        connect(socket, &QTcpSocket::disconnected, this, &Server::handleTcpDisconnected);
         connections.push_back(new Model::Connection(socket));
-        emit newConnection();
+        emit connectionsChanged();
 
-        broadcastFiles();
+        broadcastFilesToTcp();
     }
 
-    void Server::handleReadyRead()
+    void Server::handleTcpReadyRead()
     {
         qDebug() << "server received message";
         QTcpSocket *const socket = qobject_cast<QTcpSocket *>(sender());
@@ -277,10 +364,9 @@ namespace Network
         }
     }
 
-    void Server::handleDisconnected()
+    void Server::handleTcpDisconnected()
     {
         qDebug() << "server disconnected";
-        emit disconnected();
 
         if (tcpServer)
         {
@@ -296,9 +382,47 @@ namespace Network
                     connections.erase(it, connections.end());
                     (*it)->deleteLater();
                     emit connectionsChanged();
-                    broadcastFiles();
+                    broadcastFilesToTcp();
                 }
             }
         }
+    }
+
+    void Server::handleWsNewConnection()
+    {
+        qDebug() << "ws new connection";
+        QWebSocket *const socket = wsServer->nextPendingConnection();
+        connect(socket, &QWebSocket::textMessageReceived, this, &Server::handleWsTextMessageReceived);
+        connect(socket, &QWebSocket::disconnected, this, &Server::handleWsDisconnected);
+        connections.push_back(new Model::Connection(socket));
+        emit connectionsChanged();
+
+        broadcastFilesToWs();
+    }
+
+    void Server::handleWsTextMessageReceived(const QString &message)
+    {
+        qDebug() << "ws received message" << message;
+        QWebSocket *const socket = qobject_cast<QWebSocket *>(sender());
+        if (socket)
+        {
+            QJsonParseError jsonError;
+            QJsonDocument json = QJsonDocument::fromJson(message.toUtf8(), &jsonError);
+            if (!json.isNull() && jsonError.error == QJsonParseError::NoError)
+            {
+                const QJsonObject obj = json.object();
+                const QString type = obj.value("type").toString();
+                if (type == "downloadFile")
+                {
+                    const QString code = obj["id"].toString();
+                    // handleClientRequestDownloadFile(socket, code);
+                }
+            }
+        }
+    }
+
+    void Server::handleWsDisconnected()
+    {
+        qDebug() << "ws disconnected";
     }
 } // namespace Network

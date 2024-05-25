@@ -1,6 +1,8 @@
 #include "./utils.hpp"
+#include <QApplication>
 #include <QNetworkInterface>
 #include <QUuid>
+#include <QClipboard>
 #include <sstream>
 #include <iomanip>
 
@@ -62,4 +64,10 @@ QString Utils::getReadableSize(long long int size)
         ss << size / 1024.0 / 1024 / 1024 << "GB";
     }
     return QString::fromStdString(ss.str());
+}
+
+void Utils::copyToClipboard(const QString &text)
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->setText(text);
 }

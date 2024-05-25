@@ -1,4 +1,4 @@
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Quick QuickControls2 Qml Network Multimedia)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Quick QuickControls2 Qml Network WebSockets Multimedia)
 
 configure_file(./appConfig.hpp.in ./appConfig.hpp)
 configure_file(assets.qrc assets.qrc @ONLY)
@@ -56,6 +56,7 @@ target_link_libraries(${TARGET} PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::WebSockets
     Qt${QT_VERSION_MAJOR}::Multimedia
     Qt${QT_VERSION_MAJOR}::Quick
     Qt${QT_VERSION_MAJOR}::QuickControls2

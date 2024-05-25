@@ -6,6 +6,7 @@ import model.channel as Model
 import model.myFile as Model
 import model.file as Model
 import network.server as Network
+import utils
 
 Rectangle {
     id: root
@@ -39,7 +40,7 @@ Rectangle {
             Button {
                 id: startButton
                 text: qsTr("Start")
-                enabled: network.status === Network.Server.Unconnected
+                enabled: network.tcpStatus === Network.Server.Unconnected
 
                 onClicked: {
                     const result = network.start(root.channel.address, root.channel.port);
@@ -52,9 +53,64 @@ Rectangle {
             Button {
                 id: stopButton
                 text: qsTr("Stop")
-                enabled: network.status === Network.Server.Connected
+                enabled: network.tcpStatus === Network.Server.Connected
 
                 onClicked: network.stop()
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: false
+            Layout.preferredWidth: parent.width - 20
+            Layout.margins: 10
+            spacing: 10
+
+            Image {
+                id: browserButton
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                antialiasing: true
+                Layout.preferredWidth: 30
+                Layout.preferredHeight: 30
+                source: network.wsStatus === Network.Server.Connected ? "qrc:/images/browser-active" : "qrc:/images/browser"
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
+                    onClicked: () => {
+                        if (network.wsStatus === Network.Server.Unconnected) {
+                            network.startWs('127.0.0.1', 1028);
+                        } else if(network.wsStatus === Network.Server.Connected) {
+                            network.stopWs();
+                        }
+                    }
+                }
+            }
+
+            Image {
+                visible: network.wsStatus === Network.Server.Connected
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                antialiasing: true
+                Layout.preferredWidth: 18
+                Layout.preferredHeight: 18
+                source: "qrc:/images/copy"
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
+                    onClicked: () => {
+                        utils.copyToClipboard(`http://${root.channel.address}:${root.channel.port}`);
+                    }
+                }
+            }
+
+            Item {
+                Layout.fillWidth: true
             }
         }
 
@@ -199,10 +255,6 @@ Rectangle {
     Network.Server {
         id: network
 
-        onMyFilesChanged: {
-            console.log("Server Channel My Files Changed");
-        }
-
         onConnectionsChanged: {
             console.log("Server Channel Connections Changed");
             if (stackView.currentIndex !== 0) {
@@ -213,16 +265,16 @@ Rectangle {
                 }
             }
         }
-
-        onDisconnected: {
-            console.log("Server Channel Disconnected");
-        }
     }
 
     MessageDialog {
         id: messageDialog
         text: qsTr("Failed to start server channel!")
         buttons: MessageDialog.Ok
+    }
+
+    Utils {
+        id: utils
     }
 
     Component.onDestruction: console.log("Server Channel Destruction Beginning!")
