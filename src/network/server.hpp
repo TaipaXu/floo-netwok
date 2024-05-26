@@ -15,6 +15,8 @@ QT_END_NAMESPACE
 
 namespace Network
 {
+    class WebServer;
+
     class Server : public QObject
     {
         Q_OBJECT
@@ -75,6 +77,7 @@ namespace Network
         Status wsStatus;
         QTcpServer *tcpServer;
         QWebSocketServer *wsServer;
+        WebServer *webServer;
         QList<Model::MyFile *> myFiles;
         QList<Model::Connection *> connections;
     };

@@ -10,11 +10,12 @@
 #include <QFileInfo>
 #include "network/sendManager.hpp"
 #include "network/receiveManager.hpp"
+#include "network/webServer.hpp"
 
 namespace Network
 {
     Server::Server(QObject *parent)
-        : QObject(parent), tcpStatus{Status::Unconnected}, wsStatus{Status::Unconnected}, tcpServer{nullptr}, wsServer{nullptr}
+        : QObject(parent), tcpStatus{Status::Unconnected}, wsStatus{Status::Unconnected}, tcpServer{nullptr}, wsServer{nullptr}, webServer{nullptr}
     {
     }
 
@@ -79,6 +80,10 @@ namespace Network
             wsStatus = Status::Unconnected;
         }
         emit wsStatusChanged();
+
+        webServer = new WebServer();
+        webServer->start(address);
+
         return result;
     }
 
@@ -123,6 +128,12 @@ namespace Network
         emit wsStatusChanged();
         emit connectionsChanged();
         broadcastFilesToWs();
+
+        if (webServer)
+        {
+            webServer->deleteLater();
+            webServer = nullptr;
+        }
     }
 
     void Server::broadcastFilesToTcp() const
