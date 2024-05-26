@@ -13,6 +13,7 @@ After compiling the [Floo Network Web](https://github.com/TaipaXu/floo_network_w
 ```sh
 $ git clone https://github.com/TaipaXu/floo-network.git
 $ cd floo-network
+$ ./web.sh # run the web.sh script
 $ mkdir build && cd build
 $ cmake -DCMAKE_BUILD_TYPE=Release ..
 $ make -j$(nproc)

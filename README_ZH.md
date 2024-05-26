@@ -14,6 +14,7 @@
 ```sh
 $ git clone https://github.com/TaipaXu/floo-network.git
 $ cd floo-network
+$ ./web.sh #运行web.sh脚本
 $ mkdir build && cd build
 $ cmake -DCMAKE_BUILD_TYPE=Release ..
 $ make -j$(nproc)
