@@ -8,6 +8,8 @@ English | [中文](./README_ZH.md)
 
 ## Compiling
 
+After compiling the [Floo Network Web](https://github.com/TaipaXu/floo_network_web.git) project, copy the compiled 'web' directory to the root directory of this project.
+
 ```sh
 $ git clone https://github.com/TaipaXu/floo-network.git
 $ cd floo-network

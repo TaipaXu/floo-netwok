@@ -17,6 +17,7 @@ namespace Network
         ~SendManager();
 
         int createSender(const QString &path);
+        int createHttpSender(const QString &path);
 
     signals:
         void sendersChanged() const;

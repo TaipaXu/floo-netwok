@@ -6,7 +6,10 @@
 
 ![](./app.png)
 
+
 ## 编译
+
+编译[Floo Network Web](https://github.com/TaipaXu/floo_network_web.git)项目后将编译后的web目录复制至本项目根目录。
 
 ```sh
 $ git clone https://github.com/TaipaXu/floo-network.git

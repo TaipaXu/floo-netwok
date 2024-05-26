@@ -36,6 +36,8 @@ set(SOURCES
         network/receiver.cpp
         network/webServer.hpp
         network/webServer.cpp
+        network/httpSender.hpp
+        network/httpSender.cpp
 
         utils/utils.hpp
         utils/utils.cpp

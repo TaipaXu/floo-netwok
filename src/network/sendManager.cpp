@@ -1,4 +1,5 @@
 #include "./sendManager.hpp"
+#include "./httpSender.hpp"
 
 namespace Network
 {
@@ -17,6 +18,14 @@ namespace Network
         Sender *sender = new Sender(this);
         senders.append(sender);
         emit sendersChanged();
+        return sender->startSendFile(path);
+    }
+
+    int SendManager::createHttpSender(const QString &path)
+    {
+        HttpSender *sender = new HttpSender(this);
+        // senders.append(sender);
+        // emit sendersChanged();
         return sender->startSendFile(path);
     }
 } // namespace Network

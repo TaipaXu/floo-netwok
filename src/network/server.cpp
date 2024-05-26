@@ -260,6 +260,25 @@ namespace Network
         }
     }
 
+    void Server::handleWsClientRequestDownloadFile(QWebSocket *clientSocket, const QString &id)
+    {
+        qDebug() << "handle ws client request download file";
+        for (auto &&file : myFiles)
+        {
+            if (file->getId() == id)
+            {
+                const int port = Network::SendManager::getInstance()->createHttpSender(file->getPath());
+                QJsonObject json;
+                json["type"] = "uploadFileReady";
+                json["id"] = id;
+                json["ip"] = wsServer->serverAddress().toString();
+                json["port"] = port;
+                clientSocket->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                break;
+            }
+        }
+    }
+
     void Server::handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
     {
         qDebug() << "handle client ready to upload file";
@@ -426,7 +445,7 @@ namespace Network
                 if (type == "downloadFile")
                 {
                     const QString code = obj["id"].toString();
-                    // handleClientRequestDownloadFile(socket, code);
+                    handleWsClientRequestDownloadFile(socket, code);
                 }
             }
         }
