@@ -8,20 +8,22 @@ namespace Model
     {
     }
 
-    Channel::Channel(Channel::Type type, const QString &name, const QString &address, int port, QObject *parent)
+    Channel::Channel(Channel::Type type, const QString &name, const QString &address, int port, bool webEnabled, QObject *parent)
         : QObject(parent),
           channelType(type),
           channelName(name),
           channelAddress(address),
-          channelPort(port)
+          channelPort(port),
+          webEnabled(webEnabled)
     {
     }
 
-    Channel::Channel(Channel::Type type, const QString &address, int port, QObject *parent)
+    Channel::Channel(Channel::Type type, const QString &address, int port, bool webEnabled, QObject *parent)
         : QObject(parent),
           channelType(type),
           channelAddress(address),
-          channelPort(port)
+          channelPort(port),
+          webEnabled(webEnabled)
     {
     }
 
@@ -51,5 +53,22 @@ namespace Model
     {
         channelPort = port;
         emit portChanged(channelPort);
+    }
+
+    void Channel::setWebEnabled(bool enabled)
+    {
+        qDebug() << "setWebEnabled" << enabled;
+        webEnabled = enabled;
+        emit webEnabledChanged(enabled);
+    }
+
+    void Channel::setWsPort(int port)
+    {
+        wsPort = port;
+    }
+
+    void Channel::setWebServerPort(int port)
+    {
+        webServerPort = port;
     }
 } // namespace Model

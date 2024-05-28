@@ -17,18 +17,19 @@ namespace Network
         }
     }
 
-    void WebServer::start(const QString &address)
+    int WebServer::start(const QString &address)
     {
         httpServer = new QHttpServer(this);
         httpServer->route("/web/<arg>", QHttpServerRequest::Method::Get, [](const QUrl &path, const QHttpServerRequest &request) {
             qDebug() << "request" << request.url() << path;
             return QHttpServerResponse::fromFile(QString(":/web/%1").arg(path.toString()));
         });
-        int port = 1000;
+        int port = 2000;
         while (!httpServer->listen(QHostAddress(address), port))
         {
             port++;
         }
         qDebug() << "port" << port;
+        return port;
     }
 } // namespace Network

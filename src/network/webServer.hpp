@@ -16,7 +16,7 @@ namespace Network
         WebServer(QObject *parent = nullptr);
         ~WebServer();
 
-        void start(const QString &address);
+        int start(const QString &address);
 
     private:
         QHttpServer *httpServer;

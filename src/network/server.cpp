@@ -54,9 +54,9 @@ namespace Network
         return result;
     }
 
-    bool Server::startWs(const QString &address, int port)
+    void Server::startWs(const QString &address)
     {
-        qDebug() << "start ws" << address << port;
+        qDebug() << "start ws" << address;
         wsStatus = Status::Connecting;
         emit wsStatusChanged();
         if (!wsServer)
@@ -68,23 +68,20 @@ namespace Network
             });
         }
 
-        bool result = wsServer->listen(QHostAddress(address), port);
-        if (result)
+        int port = 1000;
+        while (!wsServer->listen(QHostAddress(address), port))
         {
-            qDebug() << "Server ws started at" << address << port;
-            wsStatus = Status::Connected;
+            port++;
         }
-        else
-        {
-            qDebug() << "Server ws start failed";
-            wsStatus = Status::Unconnected;
-        }
+        qDebug() << "port" << port;
+        wsStatus = Status::Connected;
         emit wsStatusChanged();
 
         webServer = new WebServer();
-        webServer->start(address);
+        int webServerPort = webServer->start(address);
+        qDebug() << "webServerPort" << webServerPort;
 
-        return result;
+        emit wsInfoChanged(port, webServerPort);
     }
 
     void Server::stop()

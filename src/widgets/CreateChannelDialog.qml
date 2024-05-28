@@ -13,7 +13,7 @@ ApplicationWindow {
 
     readonly property int defaultPort: 1024
 
-    signal accepted(string name, string address, int port)
+    signal accepted(string name, string address, int port, bool webEnabled)
 
     ColumnLayout {
         anchors.fill: parent
@@ -51,6 +51,21 @@ ApplicationWindow {
             text: root.defaultPort.toString()
 
             Keys.onReturnPressed: submit()
+        }
+
+        RowLayout {
+            Label {
+                text: qsTr("Web:")
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Switch {
+                id: enableWeb
+                checked: false
+            }
         }
 
         Item {
@@ -94,7 +109,7 @@ ApplicationWindow {
 
     function submit() {
         if (channelName.length > 0 && channelAddress.currentText.length > 0 && channelPort.length > 0) {
-            root.accepted(channelName.text, channelAddress.currentText, parseInt(channelPort.text));
+            root.accepted(channelName.text, channelAddress.currentText, parseInt(channelPort.text), enableWeb.checked);
             root.close();
         }
     }

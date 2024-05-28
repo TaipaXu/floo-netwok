@@ -183,8 +183,8 @@ ApplicationWindow {
         }
     }
 
-    function onCreateChannelAccepted(name, address, port) {
-        console.log("onCreateChannelAccepted", name, address, port);
+    function onCreateChannelAccepted(name, address, port, webEnabled) {
+        console.log("onCreateChannelAccepted", name, address, port, webEnabled);
         const channel = Qt.createQmlObject(`
             import model.channel
             Channel {
@@ -192,6 +192,7 @@ ApplicationWindow {
                 name: "${name}"
                 address: "${address}"
                 port: ${port}
+                webEnabled: ${webEnabled}
             }
         `, root);
         channelsModel.append({

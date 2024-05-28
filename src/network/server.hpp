@@ -40,7 +40,7 @@ namespace Network
         ~Server();
 
         Q_INVOKABLE bool start(const QString &address, int port);
-        Q_INVOKABLE bool startWs(const QString &address, int port);
+        Q_INVOKABLE void startWs(const QString &address);
         Q_INVOKABLE void stop();
         Q_INVOKABLE void stopWs();
         const QList<Model::MyFile *> &getMyFiles();
@@ -54,6 +54,7 @@ namespace Network
         void wsStatusChanged() const;
         void connectionsChanged() const;
         void myFilesChanged() const;
+        void wsInfoChanged(int wsPort, int weServerPort) const;
 
     private:
         Status getTcpStatus() const;

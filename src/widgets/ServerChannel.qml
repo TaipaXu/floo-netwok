@@ -46,6 +46,8 @@ Rectangle {
                     const result = network.start(root.channel.address, root.channel.port);
                     if (!result) {
                         messageDialog.open();
+                    } else if (enableWeb.checked) {
+                        network.startWs(root.channel.address);
                     }
                 }
             }
@@ -53,9 +55,15 @@ Rectangle {
             Button {
                 id: stopButton
                 text: qsTr("Stop")
-                enabled: network.tcpStatus === Network.Server.Connected
+                enabled: network.tcpStatus === Network.Server.Connected && network.wsStatus !== Network.Server.Connecting
 
-                onClicked: network.stop()
+                onClicked: {
+                    network.stop();
+
+                    if (network.wsStatus === Network.Server.Connected) {
+                        network.stopWs();
+                    }
+                }
             }
         }
 
@@ -63,28 +71,25 @@ Rectangle {
             Layout.fillWidth: false
             Layout.preferredWidth: parent.width - 20
             Layout.margins: 10
-            spacing: 10
+            spacing: 3
 
-            Image {
-                id: browserButton
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                antialiasing: true
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-                source: network.wsStatus === Network.Server.Connected ? "qrc:/images/browser-active" : "qrc:/images/browser"
+            Label {
+                text: qsTr("Web")
+            }
 
-                MouseArea {
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+            Switch {
+                id: enableWeb
+                enabled: network.wsStatus !== Network.Server.Connecting
+                checked: root.channel.webEnabled
 
-                    onClicked: () => {
-                        if (network.wsStatus === Network.Server.Unconnected) {
-                            network.startWs('127.0.0.1', 1028);
-                        } else if(network.wsStatus === Network.Server.Connected) {
-                            network.stopWs();
-                        }
+                onCheckedChanged: {
+                    root.channel.webEnabled = checked;
+                    if (checked && network.tcpStatus === Network.Server.Connected && network.wsStatus === Network.Server.Unconnected) {
+                        network.startWs(root.channel.address);
+                        return;
+                    }
+                    if (!checked && network.wsStatus === Network.Server.Connected) {
+                        network.stopWs();
                     }
                 }
             }
@@ -104,7 +109,7 @@ Rectangle {
                     cursorShape: Qt.PointingHandCursor
 
                     onClicked: () => {
-                        utils.copyToClipboard(`http://${root.channel.address}:${root.channel.port}`);
+                        utils.copyToClipboard(`http://${root.channel.address}:${root.channel.webServerPort}/web/index.html?wsPort=${root.channel.wsPort}`);
                     }
                 }
             }
@@ -264,6 +269,12 @@ Rectangle {
                     stackView.currentIndex = network.connections.length;
                 }
             }
+        }
+
+        onWsInfoChanged: function(wsPort, weServerPort) {
+            console.log("Server Channel WS Info Changed");
+            root.channel.wsPort = wsPort;
+            root.channel.webServerPort = weServerPort;
         }
     }
 
