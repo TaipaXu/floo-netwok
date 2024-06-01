@@ -101,7 +101,7 @@ namespace Network
         tcpStatus = Status::Unconnected;
         emit tcpStatusChanged();
         emit connectionsChanged();
-        broadcastFilesToTcp();
+        broadcastFiles();
     }
 
     void Server::stopWs()
@@ -124,7 +124,7 @@ namespace Network
         wsStatus = Status::Unconnected;
         emit wsStatusChanged();
         emit connectionsChanged();
-        broadcastFilesToWs();
+        broadcastFiles();
 
         if (webServer)
         {
@@ -133,7 +133,7 @@ namespace Network
         }
     }
 
-    void Server::broadcastFilesToTcp() const
+    void Server::broadcastFiles() const
     {
         qDebug() << "broadcast files";
         if (myFiles.empty() && connections.empty())
@@ -148,6 +148,11 @@ namespace Network
         for (Model::Connection *connection : connections)
         {
             ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
+
+            if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+            {
+                json["you"] = connection->getAddress();
+            }
         }
         json["files"] = ipFiles;
 
@@ -159,33 +164,9 @@ namespace Network
             {
                 connection->getTcpSocket()->write(data);
             }
-        }
-    }
-
-    void Server::broadcastFilesToWs() const
-    {
-        qDebug() << "broadcast files to ws";
-        if (myFiles.empty() && connections.empty())
-        {
-            return;
-        }
-
-        QJsonObject json;
-        json["type"] = "files";
-        QJsonObject ipFiles;
-        ipFiles["server"] = Model::toJson(myFiles);
-        // for (Model::Connection *connection : connections)
-        // {
-        //     ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
-        // }
-        json["files"] = ipFiles;
-
-        const QJsonDocument doc(json);
-        const QByteArray data = doc.toJson(QJsonDocument::Compact);
-        for (Model::Connection *connection : connections)
-        {
-            if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+            else if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
             {
+
                 connection->getWsSocket()->sendTextMessage(data);
             }
         }
@@ -219,7 +200,38 @@ namespace Network
             emit connectionsChanged();
         }
 
-        broadcastFilesToTcp();
+        broadcastFiles();
+    }
+
+    void Server::addWsClientFiles(QWebSocket *socket, const QJsonArray &filesArray)
+    {
+        qDebug() << "add ws client files";
+        Model::Connection *connection = nullptr;
+        for (Model::Connection *conn : connections)
+        {
+            if (conn->getWsSocket() == socket)
+            {
+                connection = conn;
+                break;
+            }
+        }
+
+        if (connection)
+        {
+            QList<Model::File *> files;
+            for (const QJsonValue &fileValue : filesArray)
+            {
+                const QJsonObject fileObj = fileValue.toObject();
+                const QString id = fileObj.value("id").toString();
+                const QString name = fileObj.value("name").toString();
+                const int size = fileObj.value("size").toInteger();
+                files.push_back(new Model::File(id, name, size, connection));
+            }
+            connection->setFiles(files);
+            emit connectionsChanged();
+        }
+
+        broadcastFiles();
     }
 
     void Server::handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id)
@@ -312,8 +324,7 @@ namespace Network
         }
 
         emit myFilesChanged();
-        broadcastFilesToTcp();
-        broadcastFilesToWs();
+        broadcastFiles();
     }
 
     void Server::removeMyFile(Model::MyFile *myFile)
@@ -323,7 +334,7 @@ namespace Network
         myFile->deleteLater();
 
         emit myFilesChanged();
-        broadcastFilesToTcp();
+        broadcastFiles();
     }
 
     void Server::requestDownloadFile(Model::File *file)
@@ -352,7 +363,7 @@ namespace Network
         connections.push_back(new Model::Connection(socket));
         emit connectionsChanged();
 
-        broadcastFilesToTcp();
+        broadcastFiles();
     }
 
     void Server::handleTcpReadyRead()
@@ -409,7 +420,7 @@ namespace Network
                     connections.erase(it, connections.end());
                     (*it)->deleteLater();
                     emit connectionsChanged();
-                    broadcastFilesToTcp();
+                    broadcastFiles();
                 }
             }
         }
@@ -424,7 +435,7 @@ namespace Network
         connections.push_back(new Model::Connection(socket));
         emit connectionsChanged();
 
-        broadcastFilesToWs();
+        broadcastFiles();
     }
 
     void Server::handleWsTextMessageReceived(const QString &message)
@@ -439,7 +450,12 @@ namespace Network
             {
                 const QJsonObject obj = json.object();
                 const QString type = obj.value("type").toString();
-                if (type == "downloadFile")
+                if (type == "files")
+                {
+                    const QJsonArray filesArray = obj.value("files").toArray();
+                    addWsClientFiles(socket, filesArray);
+                }
+                else if (type == "downloadFile")
                 {
                     const QString code = obj["id"].toString();
                     handleWsClientRequestDownloadFile(socket, code);
@@ -451,5 +467,23 @@ namespace Network
     void Server::handleWsDisconnected()
     {
         qDebug() << "ws disconnected";
+        if (wsServer)
+        {
+            QWebSocket *socket = qobject_cast<QWebSocket *>(sender());
+            if (socket)
+            {
+                socket->deleteLater();
+                auto it = std::remove_if(connections.begin(), connections.end(), [socket](Model::Connection *connection) {
+                    return connection->getWsSocket() == socket;
+                });
+                if (it != connections.end())
+                {
+                    connections.erase(it, connections.end());
+                    (*it)->deleteLater();
+                    emit connectionsChanged();
+                    broadcastFiles();
+                }
+            }
+        }
     }
 } // namespace Network

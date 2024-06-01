@@ -59,9 +59,9 @@ namespace Network
     private:
         Status getTcpStatus() const;
         Status getWsStatus() const;
-        void broadcastFilesToTcp() const;
-        void broadcastFilesToWs() const;
+        void broadcastFiles() const;
         void addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray);
+        void addWsClientFiles(QWebSocket *socket, const QJsonArray &filesArray);
         void handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id);
         void handleWsClientRequestDownloadFile(QWebSocket *clientSocket, const QString &id);
         void handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId);

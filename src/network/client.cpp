@@ -13,7 +13,7 @@
 namespace Network
 {
     Client::Client(QObject *parent)
-        : QObject(parent), tcpSocket{nullptr}
+        : QObject(parent), status{Status::Unconnected}, tcpSocket{nullptr}
     {
     }
 

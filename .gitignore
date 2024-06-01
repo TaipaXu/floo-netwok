@@ -59,3 +59,4 @@ compile_commands.json
 .vscode
 build
 changelog.gz
+/web
