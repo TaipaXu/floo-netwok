@@ -23,5 +23,6 @@ namespace Network
 
     private:
         QHttpServer *httpServer;
+        bool visited;
     };
 } // namespace Network

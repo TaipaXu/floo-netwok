@@ -4,7 +4,7 @@
 namespace Network
 {
     HttpSender::HttpSender(QObject *parent)
-        : QObject(parent), httpServer{nullptr}
+        : QObject(parent), httpServer{nullptr}, visited{false}
     {
     }
 
@@ -15,11 +15,19 @@ namespace Network
     int HttpSender::startSendFile(const QString &path)
     {
         httpServer = new QHttpServer(this);
-        httpServer->route("/", QHttpServerRequest::Method::Get, [path](const QHttpServerRequest &request) {
-            qDebug() << "request" << request.url() << path;
-            return QHttpServerResponse::fromFile(path);
-        });
         connect(httpServer, &QHttpServer::newWebSocketConnection, this, &HttpSender::handleNewConnection);
+        httpServer->route("/", QHttpServerRequest::Method::Get, [path, this](const QHttpServerRequest &request) {
+            qDebug() << "request" << request.url() << path;
+            if (visited)
+            {
+                return QHttpServerResponse(QHttpServerResponse::StatusCode::NotFound);
+            }
+            else
+            {
+                visited = true;
+                return QHttpServerResponse::fromFile(path);
+            }
+        });
         int port = 1000;
         while (!httpServer->listen(QHostAddress::Any, port))
         {
