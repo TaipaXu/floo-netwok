@@ -54,6 +54,7 @@ namespace Network
         void sendFilesInfoToServer() const;
         void handleRequestFiles(const QJsonObject &ipFiles);
         void handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const;
+        void handleRequestPrepareUploadFileForWeb(const QString &fileId, const QString &reveiverIp) const;
         void handleRequestUploadFileReady(const QString &ip, int port) const;
 
     private slots:

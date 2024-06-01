@@ -286,6 +286,22 @@ namespace Network
                 break;
             }
         }
+
+        for (Model::Connection *connection : connections)
+        {
+            for (auto &&file : connection->getFiles())
+            {
+                if (file->getId() == id)
+                {
+                    QJsonObject json;
+                    json["type"] = "prepareUploadForWeb";
+                    json["id"] = id;
+                    json["ip"] = clientSocket->peerAddress().toString();
+                    connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                    break;
+                }
+            }
+        }
     }
 
     void Server::handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
@@ -310,6 +326,26 @@ namespace Network
                     connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
                     break;
                 }
+            }
+        }
+    }
+
+    void Server::handleClientReadyToUploadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
+    {
+        qDebug() << "handle client ready to upload file for web";
+        qDebug() << "senderIp" << senderIp << "reveiverIp" << reveiverIp << "port" << port << "fileId" << fileId;
+
+        for (Model::Connection *connection : connections)
+        {
+            if (connection->getAddress() == reveiverIp)
+            {
+                QJsonObject json;
+                json["type"] = "uploadFileReady";
+                json["id"] = fileId;
+                json["ip"] = senderIp;
+                json["port"] = port;
+                connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                break;
             }
         }
     }
@@ -397,6 +433,13 @@ namespace Network
                     const int port = obj.value("port").toInt();
                     const QString fileId = obj.value("id").toString();
                     handleClientReadyToUploadFile(socket->peerAddress().toString(), reveiverIp, port, fileId);
+                }
+                else if (type == "readyToUploadForWeb")
+                {
+                    const QString reveiverIp = obj.value("ip").toString();
+                    const int port = obj.value("port").toInt();
+                    const QString fileId = obj.value("id").toString();
+                    handleClientReadyToUploadFileForWeb(socket->peerAddress().toString(), reveiverIp, port, fileId);
                 }
             }
         }

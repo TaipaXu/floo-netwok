@@ -65,6 +65,7 @@ namespace Network
         void handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id);
         void handleWsClientRequestDownloadFile(QWebSocket *clientSocket, const QString &id);
         void handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId);
+        void handleClientReadyToUploadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId);
 
     private slots:
         void handleTcpNewConnection();

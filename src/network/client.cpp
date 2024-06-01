@@ -160,6 +160,24 @@ namespace Network
         }
     }
 
+    void Client::handleRequestPrepareUploadFileForWeb(const QString &fileId, const QString &reveiverIp) const
+    {
+        qDebug() << "client request prepare upload file for web" << fileId << reveiverIp;
+        auto file = std::find_if(myFiles.begin(), myFiles.end(), [fileId](Model::MyFile *myFile) {
+            return myFile->getId() == fileId;
+        });
+        if (file != myFiles.end())
+        {
+            const int port = SendManager::getInstance()->createHttpSender((*file)->getPath());
+            QJsonObject json;
+            json["type"] = "readyToUploadForWeb";
+            json["ip"] = reveiverIp;
+            json["port"] = port;
+            json["id"] = fileId;
+            tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+        }
+    }
+
     void Client::handleRequestUploadFileReady(const QString &ip, int port) const
     {
         qDebug() << "client request upload file ready" << ip << port;
@@ -196,6 +214,12 @@ namespace Network
                 const QString fileId = obj["id"].toString();
                 const QString reveiverIp = obj["ip"].toString();
                 handleRequestPrepareUploadFile(fileId, reveiverIp);
+            }
+            else if (type == "prepareUploadForWeb")
+            {
+                const QString fileId = obj["id"].toString();
+                const QString reveiverIp = obj["ip"].toString();
+                handleRequestPrepareUploadFileForWeb(fileId, reveiverIp);
             }
             else if (type == "uploadFileReady")
             {
