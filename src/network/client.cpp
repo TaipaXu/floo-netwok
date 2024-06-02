@@ -60,15 +60,29 @@ namespace Network
     void Client::addMyFiles(const QList<QUrl> &myFiles)
     {
         qDebug() << "Client::addMyFiles";
+        bool appended = false;
         for (const QUrl &url : myFiles)
         {
-            QFileInfo fileInfo(url.toLocalFile());
-            this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+            auto found = std::find_if(this->myFiles.begin(), this->myFiles.end(), [&url](Model::MyFile *myFile) {
+                return myFile->getPath() == url.toLocalFile();
+            });
+            if (found == this->myFiles.end())
+            {
+                QFileInfo fileInfo(url.toLocalFile());
+                this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+                if (!appended)
+                {
+                    appended = true;
+                }
+            }
         }
         qDebug() << "size: " << myFiles.size();
 
-        emit myFilesChanged();
-        sendFilesInfoToServer();
+        if (appended)
+        {
+            emit myFilesChanged();
+            sendFilesInfoToServer();
+        }
     }
 
     void Client::removeMyFile(Model::MyFile *myFile)
