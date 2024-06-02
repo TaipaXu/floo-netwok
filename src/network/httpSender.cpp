@@ -1,5 +1,6 @@
 #include "./httpSender.hpp"
 #include <QHttpServer>
+#include <QFileInfo>
 
 namespace Network
 {
@@ -25,7 +26,9 @@ namespace Network
             else
             {
                 visited = true;
-                return QHttpServerResponse::fromFile(path);
+                QHttpServerResponse response{QHttpServerResponse::fromFile(path)};
+                response.addHeader("Content-Disposition", QString("attachment; filename=%1").arg(QFileInfo(path).fileName()).toUtf8());
+                return response;
             }
         });
         int port = 1000;
