@@ -259,9 +259,16 @@ namespace Network
                 if (file->getId() == id)
                 {
                     QJsonObject json;
-                    json["type"] = "prepareUpload";
                     json["id"] = id;
                     json["ip"] = connection->getAddress();
+                    if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
+                    {
+                        json["type"] = "prepareUpload";
+                    }
+                    else if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+                    {
+                        json["type"] = "prepareDownloadForWeb";
+                    }
                     clientSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
                     break;
                 }
@@ -350,6 +357,26 @@ namespace Network
         }
     }
 
+    void Server::handleClientReadyToDownloadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
+    {
+        qDebug() << "handle client ready to download file for web";
+        qDebug() << "senderIp" << senderIp << "reveiverIp" << reveiverIp << "port" << port << "fileId" << fileId;
+
+        for (Model::Connection *connection : connections)
+        {
+            if (connection->getAddress() == senderIp)
+            {
+                QJsonObject json;
+                json["type"] = "prepareUpload";
+                json["id"] = fileId;
+                json["ip"] = reveiverIp;
+                json["port"] = port;
+                connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                break;
+            }
+        }
+    }
+
     void Server::addMyFiles(const QList<QUrl> &myFiles)
     {
         qDebug() << "Server::addMyFiles";
@@ -384,7 +411,16 @@ namespace Network
                 json["type"] = "prepareUpload";
                 json["id"] = file->getId();
                 json["ip"] = "server";
-                connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
+                {
+                    connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                }
+                else if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+                {
+                    const int port = ReceiveManager::getInstance()->createHttpReceiver();
+                    json["port"] = port;
+                    connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                }
                 break;
             }
         }
@@ -440,6 +476,13 @@ namespace Network
                     const int port = obj.value("port").toInt();
                     const QString fileId = obj.value("id").toString();
                     handleClientReadyToUploadFileForWeb(socket->peerAddress().toString(), reveiverIp, port, fileId);
+                }
+                else if (type == "readyToDownloadForWeb")
+                {
+                    const QString senderIp = obj.value("ip").toString();
+                    const int port = obj.value("port").toInt();
+                    const QString fileId = obj.value("id").toString();
+                    handleClientReadyToDownloadFileForWeb(senderIp, socket->peerAddress().toString(), port, fileId);
                 }
             }
         }

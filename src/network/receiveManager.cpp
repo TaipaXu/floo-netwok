@@ -1,4 +1,5 @@
 #include "./receiveManager.hpp"
+#include "network/httpReceiver.hpp"
 
 namespace Network
 {
@@ -18,5 +19,11 @@ namespace Network
         receiver->startReceiveFile(ip, port);
         receivers.append(receiver);
         emit receiversChanged();
+    }
+
+    int ReceiveManager::createHttpReceiver()
+    {
+        HttpReceiver *receiver = new HttpReceiver(this);
+        return receiver->startReceiveFile();
     }
 } // namespace Network

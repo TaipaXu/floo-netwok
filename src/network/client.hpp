@@ -56,6 +56,7 @@ namespace Network
         void handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const;
         void handleRequestPrepareUploadFileForWeb(const QString &fileId, const QString &reveiverIp) const;
         void handleRequestUploadFileReady(const QString &ip, int port) const;
+        void handleRequestPrepareDownloadFileForWeb(const QString &fileId, const QString &senderIp) const;
 
     private slots:
         void handleConnected();

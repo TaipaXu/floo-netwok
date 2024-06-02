@@ -17,6 +17,7 @@ namespace Network
         ~ReceiveManager();
 
         void createReceiver(const QString &ip, int port);
+        int createHttpReceiver();
 
     signals:
         void receiversChanged() const;

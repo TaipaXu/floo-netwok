@@ -184,6 +184,18 @@ namespace Network
         ReceiveManager::getInstance()->createReceiver(ip, port);
     }
 
+    void Client::handleRequestPrepareDownloadFileForWeb(const QString &fileId, const QString &senderIp) const
+    {
+        qDebug() << "client request prepare download file for web" << senderIp;
+        const int port = ReceiveManager::getInstance()->createHttpReceiver();
+        QJsonObject json;
+        json["type"] = "readyToDownloadForWeb";
+        json["id"] = fileId;
+        json["ip"] = senderIp;
+        json["port"] = port;
+        tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+    }
+
     void Client::handleConnected()
     {
         qDebug() << "client connected";
@@ -226,6 +238,12 @@ namespace Network
                 const QString senderIp = obj["ip"].toString();
                 const int port = obj["port"].toInt();
                 handleRequestUploadFileReady(senderIp, port);
+            }
+            else if (type == "prepareDownloadForWeb")
+            {
+                const QString fileId = obj["id"].toString();
+                const QString senderIp = obj["ip"].toString();
+                handleRequestPrepareDownloadFileForWeb(fileId, senderIp);
             }
         }
     }
