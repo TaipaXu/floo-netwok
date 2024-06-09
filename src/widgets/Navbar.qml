@@ -109,6 +109,10 @@ Rectangle {
             height: width
             unactiveImage: "qrc:/images/settings"
             activeImage: "qrc:/images/settings-active"
+
+            active: root.currentType === Navbar.Type.Settings
+
+            onClicked: root.currentType = Navbar.Type.Settings
         }
     }
 

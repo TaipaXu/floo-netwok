@@ -1,9 +1,11 @@
 #include "receiver.hpp"
+#include <memory>
 #include <QTcpSocket>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QStandardPaths>
+#include "persistence/settings.hpp"
 #include "utils/utils.hpp"
 
 namespace Network
@@ -88,7 +90,8 @@ namespace Network
                 char *name;
                 in >> name;
                 bytesReceived += fileNameSize;
-                QString filePath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/" + QString(name);
+                std::unique_ptr<Persistence::Settings> settings = std::make_unique<Persistence::Settings>();
+                QString filePath = settings->getDownloadPath() + "/" + QString(name);
                 filePath = QDir::toNativeSeparators(filePath);
                 localFile = new QFile(filePath, this);
                 status = Status::Receiving;

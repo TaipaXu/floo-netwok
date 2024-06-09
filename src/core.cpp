@@ -11,6 +11,7 @@
 #include "network/receiveManager.hpp"
 #include "network/sender.hpp"
 #include "network/receiver.hpp"
+#include "persistence/settings.hpp"
 #include "utils/utils.hpp"
 
 Core::Core()
@@ -25,6 +26,7 @@ Core::Core()
     QJSEngine::setObjectOwnership(Network::ReceiveManager::getInstance(), QQmlEngine::CppOwnership);
     qmlRegisterType<Network::Sender>("network.sender", 1, 0, "Sender");
     qmlRegisterType<Network::Receiver>("network.receiver", 1, 0, "Receiver");
+    qmlRegisterType<Persistence::Settings>("persistence.settings", 1, 0, "Settings");
     qmlRegisterType<Utils>("utils", 1, 0, "Utils");
 
     engine = new QQmlApplicationEngine();

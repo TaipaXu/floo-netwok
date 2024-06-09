@@ -131,6 +131,11 @@ ApplicationWindow {
                 Layout.fillHeight: true
             }
 
+            Settings {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
+
             function getCurrentIndex() {
                 switch (navbar.currentType) {
                     case Navbar.Type.Home:

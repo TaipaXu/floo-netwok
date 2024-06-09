@@ -1,4 +1,5 @@
 #include "./httpReceiver.hpp"
+#include <memory>
 #include <QHttpServer>
 #include <QFile>
 #include <QSaveFile>
@@ -6,6 +7,7 @@
 #include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include "persistence/settings.hpp"
 
 namespace Network
 {
@@ -36,7 +38,8 @@ namespace Network
 
                 const QByteArray requestData = request.body();
                 const QJsonObject json = QJsonDocument::fromJson(requestData).object();
-                QString filePath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/" + json["name"].toString();
+                std::unique_ptr<Persistence::Settings> settings = std::make_unique<Persistence::Settings>();
+                QString filePath = settings->getDownloadPath() + "/" + json["name"].toString();
                 QSaveFile file(filePath);
                 if (file.open(QIODevice::WriteOnly))
                 {

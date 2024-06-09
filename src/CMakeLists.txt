@@ -41,6 +41,11 @@ set(SOURCES
         network/httpSender.hpp
         network/httpSender.cpp
 
+        persistence/persistence.hpp
+        persistence/persistence.cpp
+        persistence/settings.hpp
+        persistence/settings.cpp
+
         utils/utils.hpp
         utils/utils.cpp
 
@@ -91,4 +96,5 @@ qt_add_qml_module(${TARGET}
         "widgets/Receives.qml"
         "widgets/Sender.qml"
         "widgets/Receiver.qml"
+        "widgets/Settings.qml"
 )
