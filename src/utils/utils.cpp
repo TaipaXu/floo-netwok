@@ -1,17 +1,20 @@
 #include "./utils.hpp"
+#include <sstream>
+#include <iomanip>
 #include <QApplication>
+#include <QDesktopServices>
+#include <QUrl>
 #include <QNetworkInterface>
 #include <QUuid>
 #include <QClipboard>
-#include <sstream>
-#include <iomanip>
+#include "appConfig.hpp"
 
 Utils::Utils(QObject *parent)
     : QObject(parent)
 {
 }
 
-QStringList Utils::getLocalAddresses()
+QStringList Utils::getLocalIPv4Addresses()
 {
     QStringList addresses;
     for (auto &&interface : QNetworkInterface::allInterfaces())
@@ -32,7 +35,7 @@ QStringList Utils::getLocalAddresses()
 
 bool Utils::isLocalAddress(const QString &address)
 {
-    QStringList addresses = getLocalAddresses();
+    QStringList addresses = getLocalIPv4Addresses();
     for (auto &&localAddress : addresses)
     {
         if (localAddress == address)
@@ -41,6 +44,12 @@ bool Utils::isLocalAddress(const QString &address)
         }
     }
     return false;
+}
+
+bool Utils::isIPv4Address(const QString &address)
+{
+    QHostAddress hostAddress(address);
+    return hostAddress.protocol() == QAbstractSocket::IPv4Protocol;
 }
 
 QString Utils::getReadableSize(long long int size)
@@ -70,4 +79,19 @@ void Utils::copyToClipboard(const QString &text)
 {
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->setText(text);
+}
+
+void Utils::openMyGithubPage()
+{
+    QDesktopServices::openUrl(QUrl(ORGANIZATION_DOMAIN));
+}
+
+void Utils::openThisProjectPage()
+{
+    QDesktopServices::openUrl(QUrl(PROJECT_DOMAIN));
+}
+
+void Utils::openThisProjectIssuesPage()
+{
+    QDesktopServices::openUrl(QUrl(PROJECT_ISSUES_DOMAIN));
 }

@@ -9,16 +9,10 @@ namespace Network
     {
     }
 
-    HttpSender::~HttpSender()
-    {
-    }
-
     int HttpSender::startSendFile(const QString &path)
     {
         httpServer = new QHttpServer(this);
-        connect(httpServer, &QHttpServer::newWebSocketConnection, this, &HttpSender::handleNewConnection);
         httpServer->route("/", QHttpServerRequest::Method::Get, [path, this](const QHttpServerRequest &request) {
-            qDebug() << "request" << request.url() << path;
             if (visited)
             {
                 return QHttpServerResponse(QHttpServerResponse::StatusCode::NotFound);
@@ -27,21 +21,15 @@ namespace Network
             {
                 visited = true;
                 QHttpServerResponse response{QHttpServerResponse::fromFile(path)};
-                response.addHeader("Content-Disposition", QString("attachment; filename=%1").arg(QFileInfo(path).fileName()).toUtf8());
+                response.addHeader("Content-Disposition", QStringLiteral("attachment; filename=%1").arg(QFileInfo(path).fileName()).toUtf8());
                 return response;
             }
         });
-        int port = 1000;
+        int port = 1024;
         while (!httpServer->listen(QHostAddress::Any, port))
         {
             port++;
         }
-        qDebug() << "port" << port;
         return port;
-    }
-
-    void HttpSender::handleNewConnection()
-    {
-        qDebug() << "new connection";
     }
 } // namespace Network

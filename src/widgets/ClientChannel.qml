@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.platform
+import Qt.labs.platform as Platform
 import model.channel as Model
 import model.myFile as Model
 import model.file as Model
@@ -12,14 +12,12 @@ Rectangle {
     color: "#3F4246"
 
     required property Model.Channel channel
-    property int currentIndex: 0
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 10
 
         RowLayout {
-            Layout.fillWidth: false
             Layout.preferredWidth: parent.width - 20
             Layout.margins: 10
             spacing: 10
@@ -37,7 +35,7 @@ Rectangle {
             Button {
                 id: startButton
                 text: qsTr("Start")
-                enabled: network.status === Network.Client.Unconnected
+                visible: network.status === Network.Client.Unconnected
 
                 onClicked: network.start(root.channel.address, root.channel.port)
             }
@@ -45,14 +43,13 @@ Rectangle {
             Button {
                 id: stopButton
                 text: qsTr("Stop")
-                enabled: network.status === Network.Client.Connected
+                visible: network.status === Network.Client.Connected
 
                 onClicked: network.stop()
             }
         }
 
         Row {
-            id: flowView
             width: parent.width
             Layout.fillWidth: true
             Layout.preferredWidth: parent.width - 20
@@ -68,9 +65,7 @@ Rectangle {
                 text: qsTr("My Files")
                 active: stackView.currentIndex == 0
 
-                onClicked: {
-                    stackView.currentIndex = 0;
-                }
+                onClicked: stackView.currentIndex = 0
             }
 
             Repeater {
@@ -80,18 +75,14 @@ Rectangle {
                     text: modelData.address
                     active: stackView.currentIndex == index + 1
 
-                    onClicked: {
-                        stackView.currentIndex = index + 1;
-                    }
+                    onClicked: stackView.currentIndex = index + 1
                 }
             }
         }
 
         Rectangle {
-            width: parent.width
             Layout.fillWidth: true
             Layout.fillHeight: true
-
             color: "#1E1E1E"
 
             StackLayout {
@@ -100,19 +91,15 @@ Rectangle {
                 currentIndex: 0
 
                 Flickable {
-                    id: flickable
                     flickableDirection: Flickable.VerticalFlick
                     contentHeight: content.height
-                    topMargin: 0
                     clip: true
-
+                    topMargin: 10
 
                     ColumnLayout {
                         id: content
                         width: parent.width
                         spacing: 10
-
-                        Item { }
 
                         Repeater {
                             model: network.myFiles
@@ -134,15 +121,13 @@ Rectangle {
                     delegate: Flickable {
                         flickableDirection: Flickable.VerticalFlick
                         contentHeight: content.height
-                        topMargin: 0
                         clip: true
+                        topMargin: 10
 
                         ColumnLayout {
                             id: content
                             width: parent.width
                             spacing: 10
-
-                            Item { }
 
                             Repeater {
                                 model: modelData.files
@@ -170,12 +155,12 @@ Rectangle {
         property bool dragging: false
 
         onEntered: (drag) => {
+            dropArea.dragging = true;
             if (drag.hasUrls) {
                 drag.accepted = true;
             } else {
                 drag.accepted = false;
             }
-            dropArea.dragging = true;
         }
         onDropped: (drop) => {
             dropArea.dragging = false;
@@ -184,9 +169,9 @@ Rectangle {
 
         Rectangle {
             anchors.fill: parent
+            visible: dropArea.dragging
             color: "black"
             opacity: 0.2
-            visible: dropArea.dragging
         }
     }
 
@@ -194,7 +179,6 @@ Rectangle {
         id: network
 
         onConnectionsChanged: {
-            console.log("Client Channel Connections Changed");
             if (stackView.currentIndex !== 0) {
                 if (network.connections.length === 0) {
                     stackView.currentIndex = 0;
@@ -204,20 +188,12 @@ Rectangle {
             }
         }
 
-        onDisconnected: {
-            console.log("Client Channel Disconnected");
-        }
-
-        onConnectError: {
-            messageDialog.open();
-        }
+        onConnectError: messageDialog.open()
     }
 
-    MessageDialog {
+    Platform.MessageDialog {
         id: messageDialog
         text: qsTr("Failed to connect to server!")
-        buttons: MessageDialog.Ok
+        buttons: Platform.MessageDialog.Ok
     }
-
-    Component.onDestruction: console.log("Client Channel Destruction Beginning!")
 }

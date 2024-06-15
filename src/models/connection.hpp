@@ -6,7 +6,6 @@
 namespace Model
 {
     class File;
-    class MyFile;
 } // namespace Model
 
 QT_BEGIN_NAMESPACE
@@ -49,10 +48,10 @@ namespace Model
         void filesChanged() const;
 
     private:
-        LinkType linkType;
-        QTcpSocket *tcpSocket = nullptr;
-        QWebSocket *wsSocket = nullptr;
-        QString address;
+        const LinkType linkType;
+        QTcpSocket *const tcpSocket = nullptr;
+        QWebSocket *const wsSocket = nullptr;
+        const QString address;
         QList<Model::File *> files;
     };
 

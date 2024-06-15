@@ -15,10 +15,11 @@ namespace Model
 
     QJsonObject toJson(const File *file)
     {
-        QJsonObject json;
-        json["id"] = file->getId();
-        json["name"] = file->getName();
-        json["size"] = file->getSize();
+        QJsonObject json{
+            {"id", file->getId()},
+            {"name", file->getName()},
+            {"size", file->getSize()},
+        };
         return json;
     }
 

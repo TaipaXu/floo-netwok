@@ -18,7 +18,7 @@ namespace Persistence
     QString Persistence::getSettingsFilePath(const QString &fileName) const
     {
         const QString dirPath = getSettingsDirPath();
-        QString filePath = QString("%1/%2/%3").arg(dirPath).arg(PROJECT_NAME).arg(fileName);
+        QString filePath = QStringLiteral("%1/%2/%3").arg(dirPath).arg(PROJECT_NAME).arg(fileName);
 
         return filePath;
     }
@@ -32,7 +32,7 @@ namespace Persistence
     QString Persistence::getDataFilePath(const QString &fileName) const
     {
         const QString dirPath = getDataDirPath();
-        QString filePath = QString("%1/%2").arg(dirPath).arg(fileName);
+        QString filePath = QStringLiteral("%1/%2").arg(dirPath).arg(fileName);
 
         return filePath;
     }

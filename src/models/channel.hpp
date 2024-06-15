@@ -12,16 +12,16 @@ namespace Model
     {
         Q_OBJECT
 
-        Q_PROPERTY(Type type READ getType WRITE setType)
+        Q_PROPERTY(Type type READ getType WRITE setType CONSTANT)
         Q_PROPERTY(QString name READ getName WRITE setName NOTIFY nameChanged)
         Q_PROPERTY(QString address READ getAddress WRITE setAddress NOTIFY addressChanged)
         Q_PROPERTY(int port READ getPort WRITE setPort NOTIFY portChanged)
-        Q_PROPERTY(bool webEnabled READ isWebEnabled WRITE setWebEnabled NOTIFY webEnabledChanged)
+        Q_PROPERTY(bool webEnabled READ getWebEnabled WRITE setWebEnabled NOTIFY webEnabledChanged)
         Q_PROPERTY(int wsPort READ getWsPort WRITE setWsPort)
         Q_PROPERTY(int webServerPort READ getWebServerPort WRITE setWebServerPort)
 
     public:
-        enum Type
+        enum class Type
         {
             Server,
             Client
@@ -30,9 +30,7 @@ namespace Model
 
     public:
         explicit Channel(QObject *parent = nullptr);
-        Q_INVOKABLE Channel(Type type, const QString &name, const QString &address, int port, bool webEnabled = false, QObject *parent = nullptr);
-        Q_INVOKABLE Channel(Type type, const QString &address, int port, bool webEnabled = false, QObject *parent = nullptr);
-        ~Channel();
+        ~Channel() = default;
 
         Type getType() const;
         void setType(Type type);
@@ -42,7 +40,7 @@ namespace Model
         void setAddress(const QString &address);
         int getPort() const;
         void setPort(int port);
-        bool isWebEnabled() const;
+        bool getWebEnabled() const;
         void setWebEnabled(bool enabled);
         int getWsPort() const;
         void setWsPort(int port);
@@ -85,7 +83,7 @@ namespace Model
         return channelPort;
     }
 
-    inline bool Channel::isWebEnabled() const
+    inline bool Channel::getWebEnabled() const
     {
         return webEnabled;
     }

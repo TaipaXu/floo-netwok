@@ -14,7 +14,7 @@ namespace Network
 
     public:
         HttpReceiver(QObject *parent = nullptr);
-        ~HttpReceiver();
+        ~HttpReceiver() = default;
 
         int startReceiveFile();
 

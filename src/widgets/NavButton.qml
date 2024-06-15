@@ -1,13 +1,12 @@
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 
 Rectangle {
     id: root
     color: "transparent"
 
-    property string unactiveImage;
-    property string activeImage;
+    property string unactiveImage
+    property string activeImage
     property bool active: false
     property bool hover: false
 
@@ -21,13 +20,7 @@ Rectangle {
         fillMode: Image.PreserveAspectFit
         smooth: true
         antialiasing: true
-        source: {
-            if (root.active || root.hover) {
-                return root.activeImage;
-            } else {
-                return root.unactiveImage;
-            }
-        }
+        source: root.active || root.hover ? root.activeImage : root.unactiveImage
     }
 
     MouseArea {

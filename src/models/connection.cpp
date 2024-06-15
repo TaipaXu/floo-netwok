@@ -22,16 +22,15 @@ namespace Model
 
     Connection::~Connection()
     {
-        qDebug() << "connection destructor";
         for (auto &&file : files)
         {
             file->deleteLater();
         }
+        files.clear();
     }
 
     QString Connection::getAddress() const
     {
-        qDebug() << "getAddress";
         if (linkType == LinkType::TcpSocket)
         {
             return tcpSocket->peerAddress().toString();
@@ -49,6 +48,7 @@ namespace Model
     void Connection::setFiles(const QList<Model::File *> &files)
     {
         qDeleteAll(this->files);
+        this->files.clear();
         this->files = files;
         emit filesChanged();
     }
@@ -56,6 +56,7 @@ namespace Model
     void Connection::removeFile(Model::File *file)
     {
         files.removeOne(file);
+        file->deleteLater();
         emit filesChanged();
     }
 } // namespace Model

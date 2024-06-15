@@ -7,11 +7,6 @@ namespace Model
     {
     }
 
-    MyFile::~MyFile()
-    {
-        qDebug() << "MyFile destructor";
-    }
-
     QJsonArray toJson(const QList<Model::MyFile *> &files)
     {
         QJsonArray json;

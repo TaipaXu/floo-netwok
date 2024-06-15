@@ -14,7 +14,7 @@ namespace Network
 
     public:
         static SendManager *getInstance();
-        ~SendManager();
+        ~SendManager() = default;
 
         int createSender(const QString &path);
         int createHttpSender(const QString &path);
@@ -36,3 +36,5 @@ namespace Network
         return senders;
     }
 } // namespace Network
+
+#define GET_SEND_MANAGER_INSTANCE SendManager *sendManager = Network::SendManager::getInstance();

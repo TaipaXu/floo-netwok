@@ -35,15 +35,15 @@ namespace Network
 
     public:
         Sender(QObject *parent = nullptr);
-        ~Sender();
+        ~Sender() = default;
 
         int startSendFile(const QString &path);
 
     signals:
-        void progressChanged() const;
         void statusChanged() const;
         void nameChanged() const;
         void sizeChanged() const;
+        void progressChanged() const;
         void fileSendFinished() const;
         void fileSendError() const;
         void fileSendDisconnected() const;

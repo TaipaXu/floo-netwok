@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt.labs.qmlmodels
 import model.channel as Model
+import utils
 
 ApplicationWindow {
     id: root
@@ -20,21 +21,18 @@ ApplicationWindow {
     menuBar: MainWindowMenuBar {
         id: menuBar
 
-        onRequestCreateChannel: showCreateChannelDialog()
-        onRequestJoinChannel: showJoinChannelDialog()
+        onRequestCreateChannel: root.showCreateChannelDialog()
+        onRequestJoinChannel: root.showJoinChannelDialog()
 
-        onRequestShowUploader: {
-
-        }
-        onRequestShowDownloader: {
-
+        onRequestShowSettings: {
+            if (navbar.currentType != Navbar.Type.Settings) {
+                navbar.currentType = Navbar.Type.Settings;
+            }
         }
     }
 
     RowLayout {
         anchors.fill: parent
-        Layout.fillWidth: true
-        Layout.fillHeight: true
 
         Navbar {
             id: navbar
@@ -42,20 +40,14 @@ ApplicationWindow {
             Layout.fillHeight: true
             channels: getChannels()
 
-            onCurrentTypeChanged: {
+            onRequestCreateChannel: root.showCreateChannelDialog()
+            onRequestJoinChannel: root.showJoinChannelDialog()
 
-            }
-
-            onRequestCreateChannel: showCreateChannelDialog()
-            onRequestJoinChannel: showJoinChannelDialog()
-
-            onCurrentChannelIndexChanged: {
-
-            }
             onRequestCloseChannel: (index) => {
-                channelsModel.remove(index);
                 const channel = channelsModel.get(index).channel;
+                channelsModel.remove(index);
                 channel.destroy();
+
                 if (navbar.channels.length === 0) {
                     navbar.currentType = Navbar.Type.Home;
                 } else if (navbar.currentChannelIndex >= navbar.channels.length) {
@@ -82,8 +74,8 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                onRequestCreateChannel: showCreateChannelDialog()
-                onRequestJoinChannel: showJoinChannelDialog()
+                onRequestCreateChannel: root.showCreateChannelDialog()
+                onRequestJoinChannel: root.showJoinChannelDialog()
             }
 
             StackLayout {
@@ -100,20 +92,25 @@ ApplicationWindow {
                         DelegateChoice {
                             roleValue: Model.Channel.Server
                             ItemDelegate {
+                                required property var modelData
+
                                 ServerChannel {
                                     width: parent.width
                                     height: parent.height
-                                    channel: channelsModel.get(index).channel
+                                    channel: modelData.channel
                                 }
                             }
                         }
+
                         DelegateChoice {
                             roleValue: Model.Channel.Client
                             ItemDelegate {
+                                required property var modelData
+
                                 ClientChannel {
                                     width: parent.width
                                     height: parent.height
-                                    channel: channelsModel.get(index).channel
+                                    channel: modelData.channel
                                 }
                             }
                         }
@@ -179,6 +176,10 @@ ApplicationWindow {
 
     Tray { }
 
+    Utils {
+        id: utils
+    }
+
     function showCreateChannelDialog() {
         const component = Qt.createComponent("qrc:/widgets/CreateChannelDialog.qml");
         if (component.status === Component.Ready) {
@@ -189,9 +190,9 @@ ApplicationWindow {
     }
 
     function onCreateChannelAccepted(name, address, port, webEnabled) {
-        console.log("onCreateChannelAccepted", name, address, port, webEnabled);
         const channel = Qt.createQmlObject(`
             import model.channel
+
             Channel {
                 type: Channel.Server
                 name: "${name}"
@@ -218,9 +219,9 @@ ApplicationWindow {
     }
 
     function onJoinChannelAccepted(address, port) {
-        console.log("onAccepted", address, port);
         const channel = Qt.createQmlObject(`
             import model.channel
+
             Channel {
                 type: Channel.Client
                 address: "${address}"

@@ -53,8 +53,6 @@ Flickable {
     FolderDialog {
         id: folderDialog
 
-        onAccepted: () => {
-            settings.downloadPath = folderDialog.folder;
-        }
+        onAccepted: settings.downloadPath = folderDialog.folder
     }
 }

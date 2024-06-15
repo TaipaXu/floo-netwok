@@ -4,18 +4,20 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
-#include <QStandardPaths>
 #include "persistence/settings.hpp"
 #include "utils/utils.hpp"
 
 namespace Network
 {
     Receiver::Receiver(QObject *parent)
-        : QObject(parent), status{Status::SettingUp}, tcpSocket{nullptr}, localFile{nullptr}, totalBytes{0}, bytesReceived{0}, fileNameSize{0}, inBlock{}
-    {
-    }
-
-    Receiver::~Receiver()
+        : QObject(parent),
+          status{Status::SettingUp},
+          tcpSocket{nullptr},
+          localFile{nullptr},
+          totalBytes{0},
+          bytesReceived{0},
+          fileNameSize{0},
+          inBlock{}
     {
     }
 
@@ -51,7 +53,10 @@ namespace Network
         {
             return QFileInfo(*localFile).fileName();
         }
-        return QString();
+        else
+        {
+            return QStringLiteral();
+        }
     }
 
     QString Receiver::getSize() const
@@ -70,6 +75,12 @@ namespace Network
         {
             tcpSocket->deleteLater();
             tcpSocket = nullptr;
+        }
+
+        if (localFile)
+        {
+            localFile->deleteLater();
+            localFile = nullptr;
         }
     }
 
@@ -127,7 +138,7 @@ namespace Network
         }
     }
 
-    void Receiver::handleError()
+    void Receiver::handleError(QAbstractSocket::SocketError socketError)
     {
         deleteTcpSocket();
         status = Status::Error;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QAbstractSocket>
 
 QT_BEGIN_NAMESPACE
 class QTcpSocket;
@@ -31,15 +32,15 @@ namespace Network
 
     public:
         Receiver(QObject *parent = nullptr);
-        ~Receiver();
+        ~Receiver() = default;
 
         void startReceiveFile(const QString &ip, int port);
 
     signals:
-        void progressChanged() const;
         void statusChanged() const;
         void nameChanged() const;
         void sizeChanged() const;
+        void progressChanged() const;
         void fileReceived() const;
         void fileReceiveError() const;
         void fileReceiveDisconnected() const;
@@ -54,7 +55,7 @@ namespace Network
 
     private slots:
         void readMessage();
-        void handleError();
+        void handleError(QAbstractSocket::SocketError socketError);
         void handleDisconnected();
 
     private:

@@ -32,9 +32,7 @@ Rectangle {
         anchors.fill: parent
         spacing: spacingValue
 
-        NavButton {
-            width: parent.width
-            height: width
+        Nav {
             unactiveImage: "qrc:/images/home"
             activeImage: "qrc:/images/home-active"
             active: root.currentType === Navbar.Type.Home
@@ -42,9 +40,7 @@ Rectangle {
             onClicked: root.currentType = Navbar.Type.Home
         }
 
-        NavButton {
-            width: parent.width
-            height: width
+        Nav {
             unactiveImage: "qrc:/images/create"
             activeImage: "qrc:/images/create-active"
 
@@ -63,11 +59,7 @@ Rectangle {
                 Repeater {
                     model: root.channels
 
-                    delegate: NavButton {
-                        width: parent.width
-                        height: width
-                        unactiveImage: modelData.type === Model.Channel.Server ? "qrc:/images/server" : "qrc:/images/client"
-                        activeImage: modelData.type === Model.Channel.Server ?  "qrc:/images/server-active" : "qrc:/images/client-active"
+                    delegate: Nav {
                         active: root.currentType === Navbar.Type.Channel && root.currentChannelIndex === index
 
                         onClicked: {
@@ -79,14 +71,22 @@ Rectangle {
                             closeMenu.closeIndex = index;
                             closeMenu.popup();
                         }
+
+                        Component.onCompleted: {
+                            if (modelData.type === Model.Channel.Server) {
+                                unactiveImage = "qrc:/images/server";
+                                activeImage = "qrc:/images/server-active";
+                            } else {
+                                unactiveImage = "qrc:/images/client";
+                                activeImage = "qrc:/images/client-active";
+                            }
+                        }
                     }
                 }
             }
         }
 
-        NavButton {
-            width: parent.width
-            height: width
+        Nav {
             unactiveImage: "qrc:/images/upload"
             activeImage: "qrc:/images/upload-active"
             active: root.currentType === Navbar.Type.Upload
@@ -94,9 +94,7 @@ Rectangle {
             onClicked: root.currentType = Navbar.Type.Upload
         }
 
-        NavButton {
-            width: parent.width
-            height: width
+        Nav {
             unactiveImage: "qrc:/images/download"
             activeImage: "qrc:/images/download-active"
             active: root.currentType === Navbar.Type.Download
@@ -104,12 +102,9 @@ Rectangle {
             onClicked: root.currentType = Navbar.Type.Download
         }
 
-        NavButton {
-            width: parent.width
-            height: width
+        Nav {
             unactiveImage: "qrc:/images/settings"
             activeImage: "qrc:/images/settings-active"
-
             active: root.currentType === Navbar.Type.Settings
 
             onClicked: root.currentType = Navbar.Type.Settings
@@ -141,5 +136,10 @@ Rectangle {
 
             onTriggered: root.requestCloseChannel(closeMenu.closeIndex)
         }
+    }
+
+    component Nav: NavButton {
+        width: parent.width
+        height: width
     }
 }

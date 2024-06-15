@@ -1,12 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Qt.labs.platform
+import Qt.labs.platform as Platform
 import model.channel as Model
 import model.myFile as Model
 import model.file as Model
 import network.server as Network
-import utils
 
 Rectangle {
     id: root
@@ -19,7 +18,6 @@ Rectangle {
         spacing: 10
 
         RowLayout {
-            Layout.fillWidth: false
             Layout.preferredWidth: parent.width - 20
             Layout.margins: 10
             spacing: 10
@@ -40,14 +38,14 @@ Rectangle {
             Button {
                 id: startButton
                 text: qsTr("Start")
-                enabled: network.tcpStatus === Network.Server.Unconnected
+                visible: network.tcpStatus === Network.Server.Unconnected
 
                 onClicked: {
-                    const result = network.start(root.channel.address, root.channel.port);
+                    const result = network.startTCP(root.channel.address, root.channel.port);
                     if (!result) {
                         messageDialog.open();
                     } else if (enableWeb.checked) {
-                        network.startWs(root.channel.address);
+                        network.startWS(root.channel.address);
                     }
                 }
             }
@@ -55,20 +53,19 @@ Rectangle {
             Button {
                 id: stopButton
                 text: qsTr("Stop")
-                enabled: network.tcpStatus === Network.Server.Connected && network.wsStatus !== Network.Server.Connecting
+                visible: network.tcpStatus === Network.Server.Connected && network.wsStatus !== Network.Server.Connecting
 
                 onClicked: {
-                    network.stop();
+                    network.stopTCP();
 
                     if (network.wsStatus === Network.Server.Connected) {
-                        network.stopWs();
+                        network.stopWS();
                     }
                 }
             }
         }
 
         RowLayout {
-            Layout.fillWidth: false
             Layout.preferredWidth: parent.width - 20
             Layout.margins: 10
             spacing: 3
@@ -85,11 +82,11 @@ Rectangle {
                 onCheckedChanged: {
                     root.channel.webEnabled = checked;
                     if (checked && network.tcpStatus === Network.Server.Connected && network.wsStatus === Network.Server.Unconnected) {
-                        network.startWs(root.channel.address);
+                        network.startWS(root.channel.address);
                         return;
                     }
                     if (!checked && network.wsStatus === Network.Server.Connected) {
-                        network.stopWs();
+                        network.stopWS();
                     }
                 }
             }
@@ -108,9 +105,7 @@ Rectangle {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
 
-                    onClicked: () => {
-                        utils.copyToClipboard(`http://${root.channel.address}:${root.channel.webServerPort}/web/index.html?wsPort=${root.channel.wsPort}`);
-                    }
+                    onClicked: utils.copyToClipboard(`http://${root.channel.address}:${root.channel.webServerPort}/web/index.html?wsPort=${root.channel.wsPort}`)
                 }
             }
 
@@ -120,9 +115,7 @@ Rectangle {
         }
 
         Row {
-            id: flowView
             width: parent.width
-            Layout.fillWidth: true
             Layout.preferredWidth: parent.width - 20
             Layout.margins: {
                 top: 0
@@ -136,9 +129,7 @@ Rectangle {
                 text: qsTr("My Files")
                 active: stackView.currentIndex == 0
 
-                onClicked: {
-                    stackView.currentIndex = 0;
-                }
+                onClicked: stackView.currentIndex = 0
             }
 
             Repeater {
@@ -148,18 +139,14 @@ Rectangle {
                     text: modelData.address
                     active: stackView.currentIndex == index + 1
 
-                    onClicked: {
-                        stackView.currentIndex = index + 1;
-                    }
+                    onClicked: stackView.currentIndex = index + 1
                 }
             }
         }
 
         Rectangle {
-            width: parent.width
             Layout.fillWidth: true
             Layout.fillHeight: true
-
             color: "#1E1E1E"
 
             StackLayout {
@@ -168,18 +155,15 @@ Rectangle {
                 currentIndex: 0
 
                 Flickable {
-                    id: flickable
                     flickableDirection: Flickable.VerticalFlick
                     contentHeight: content.height
-                    topMargin: 0
                     clip: true
+                    topMargin: 10
 
                     ColumnLayout {
                         id: content
                         width: parent.width
                         spacing: 10
-
-                        Item { }
 
                         Repeater {
                             model: network.myFiles
@@ -201,15 +185,13 @@ Rectangle {
                     delegate: Flickable {
                         flickableDirection: Flickable.VerticalFlick
                         contentHeight: content.height
-                        topMargin: 0
                         clip: true
+                        topMargin: 10
 
                         ColumnLayout {
                             id: content
                             width: parent.width
                             spacing: 10
-
-                            Item { }
 
                             Repeater {
                                 model: modelData.files
@@ -237,12 +219,12 @@ Rectangle {
         property bool dragging: false
 
         onEntered: (drag) => {
+            dropArea.dragging = true;
             if (drag.hasUrls) {
                 drag.accepted = true;
             } else {
                 drag.accepted = false;
             }
-            dropArea.dragging = true;
         }
         onDropped: (drop) => {
             dropArea.dragging = false;
@@ -251,9 +233,9 @@ Rectangle {
 
         Rectangle {
             anchors.fill: parent
+            visible: dropArea.dragging
             color: "black"
             opacity: 0.2
-            visible: dropArea.dragging
         }
     }
 
@@ -261,7 +243,6 @@ Rectangle {
         id: network
 
         onConnectionsChanged: {
-            console.log("Server Channel Connections Changed");
             if (stackView.currentIndex !== 0) {
                 if (network.connections.length === 0) {
                     stackView.currentIndex = 0;
@@ -271,22 +252,15 @@ Rectangle {
             }
         }
 
-        onWsInfoChanged: function(wsPort, weServerPort) {
-            console.log("Server Channel WS Info Changed");
+        onWsInfoChanged: (wsPort, weServerPort) => {
             root.channel.wsPort = wsPort;
             root.channel.webServerPort = weServerPort;
         }
     }
 
-    MessageDialog {
+    Platform.MessageDialog {
         id: messageDialog
         text: qsTr("Failed to start server channel!")
-        buttons: MessageDialog.Ok
+        buttons: Platform.MessageDialog.Ok
     }
-
-    Utils {
-        id: utils
-    }
-
-    Component.onDestruction: console.log("Server Channel Destruction Beginning!")
 }

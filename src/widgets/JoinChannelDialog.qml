@@ -25,9 +25,7 @@ ApplicationWindow {
             placeholderText: qsTr("Channel address")
             focus: true
 
-            Keys.onReturnPressed: {
-                channelPort.focus = true;
-            }
+            Keys.onReturnPressed: channelPort.focus = true
         }
 
 
@@ -38,7 +36,7 @@ ApplicationWindow {
             validator: IntValidator { bottom: 1024; top: 65535 }
             text: root.defaultPort.toString()
 
-            Keys.onReturnPressed: submit()
+            Keys.onReturnPressed: root.submit()
         }
 
         Item {
@@ -54,14 +52,14 @@ ApplicationWindow {
                 id: cancelButton
                 text: qsTr("Cancel")
 
-                onClicked: cancel()
+                onClicked: root.cancel()
             }
 
             Button {
                 id: createChannelButton
                 text: qsTr("OK")
 
-                onClicked: submit()
+                onClicked: root.submit()
             }
         }
     }
@@ -69,12 +67,10 @@ ApplicationWindow {
     Shortcut {
         sequence: StandardKey.Cancel
 
-        onActivated: cancel()
+        onActivated: root.cancel()
     }
 
-    onClosing: {
-        root.destroy();
-    }
+    onClosing: root.destroy
 
     function submit() {
         if (channelAddress.length > 0 && channelPort.length > 0) {

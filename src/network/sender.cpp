@@ -8,11 +8,15 @@
 namespace Network
 {
     Sender::Sender(QObject *parent)
-        : QObject(parent), status{Status::SettingUp}, tcpServer{nullptr}, localFile{nullptr}, totalBytes{0}, bytesWritten{0}, bytesToWrite{0}, payloadSize{64 * 1024}, outBlock{nullptr}
-    {
-    }
-
-    Sender::~Sender()
+        : QObject(parent),
+          status{Status::SettingUp},
+          tcpServer{nullptr},
+          localFile{nullptr},
+          totalBytes{0},
+          bytesWritten{0},
+          bytesToWrite{0},
+          payloadSize{64 * 1024},
+          outBlock{nullptr}
     {
     }
 
@@ -21,9 +25,10 @@ namespace Network
         localFile = new QFile(path, this);
         emit nameChanged();
         emit sizeChanged();
+
         tcpServer = new QTcpServer(this);
         connect(tcpServer, &QTcpServer::newConnection, this, &Sender::handleNewConnection);
-        int port = 1000;
+        int port = 1024;
         while (!tcpServer->listen(QHostAddress::Any, port))
         {
             port++;
@@ -57,7 +62,7 @@ namespace Network
         }
         else
         {
-            return QString();
+            return QStringLiteral();
         }
     }
 
@@ -69,7 +74,7 @@ namespace Network
         }
         else
         {
-            return QString();
+            return QStringLiteral();
         }
     }
 
@@ -84,6 +89,12 @@ namespace Network
         {
             tcpServer->deleteLater();
             tcpServer = nullptr;
+        }
+
+        if (localFile)
+        {
+            localFile->deleteLater();
+            localFile = nullptr;
         }
     }
 
@@ -126,11 +137,11 @@ namespace Network
         else
         {
             localFile->close();
+            deleteTcpServer();
+
             status = Status::Finished;
             emit statusChanged();
             emit fileSendFinished();
-
-            deleteTcpServer();
         }
     }
 

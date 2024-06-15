@@ -2,10 +2,11 @@ import QtQuick
 import QtQuick.Controls
 
 MenuBar {
+    id: root
+
     signal requestCreateChannel
     signal requestJoinChannel
-    signal requestShowUploader
-    signal requestShowDownloader
+    signal requestShowSettings
 
     Menu {
         title: qsTr("&File")
@@ -15,7 +16,7 @@ MenuBar {
                 icon.name: "document-new"
                 text: qsTr("&Create a channel")
 
-                onTriggered: requestCreateChannel()
+                onTriggered: root.requestCreateChannel()
             }
         }
 
@@ -24,7 +25,7 @@ MenuBar {
                 icon.name: "document-open"
                 text: qsTr("&Join a channel")
 
-                onTriggered: requestJoinChannel()
+                onTriggered: root.requestJoinChannel()
             }
         }
 
@@ -32,6 +33,8 @@ MenuBar {
             action: Action {
                 icon.name: "preferences-system"
                 text: qsTr("&Settings")
+
+                onTriggered: root.requestShowSettings();
             }
         }
 
@@ -41,6 +44,7 @@ MenuBar {
             action: Action {
                 icon.name: "application-exit"
                 text: qsTr("&Quit")
+
                 onTriggered: Qt.quit()
             }
         }
@@ -54,7 +58,7 @@ MenuBar {
                 icon.name: "help-about"
                 text: qsTr("&About me")
 
-                onTriggered: Qt.openUrlExternally("https://github.com/TaipaXu")
+                onTriggered: utils.openMyGithubPage()
             }
         }
 
@@ -63,7 +67,7 @@ MenuBar {
                 icon.name: "help-about"
                 text: qsTr("&Project domain")
 
-                onTriggered: Qt.openUrlExternally("https://github.com/TaipaXu/floo-network")
+                onTriggered: utils.openThisProjectPage()
             }
         }
 
@@ -72,7 +76,7 @@ MenuBar {
                 icon.name: "help-about"
                 text: qsTr("&Bug report")
 
-                onTriggered: Qt.openUrlExternally("https://github.com/TaipaXu/floo-network/issues")
+                onTriggered: utils.openThisProjectIssuesPage()
             }
         }
     }

@@ -9,10 +9,6 @@ namespace Network
         return &instance;
     }
 
-    ReceiveManager::~ReceiveManager()
-    {
-    }
-
     void ReceiveManager::createReceiver(const QString &ip, int port)
     {
         Receiver *receiver = new Receiver(this);

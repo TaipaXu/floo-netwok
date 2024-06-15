@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import utils
 
 ApplicationWindow {
     id: root
@@ -27,19 +26,17 @@ ApplicationWindow {
             text: qsTr("New channel")
             focus: true
 
-            Keys.onReturnPressed: {
-                channelAddress.focus = true;
-            }
+            Keys.onReturnPressed: channelAddress.focus = true
+
+            Component.onCompleted: selectAll()
         }
 
         ComboBox {
             id: channelAddress
             Layout.fillWidth: true
-            model: utils.getLocalAddresses()
+            model: utils.getLocalIPv4Addresses()
 
-            Keys.onReturnPressed: {
-                channelPort.focus = true;
-            }
+            Keys.onReturnPressed: channelPort.focus = true
         }
 
 
@@ -50,12 +47,12 @@ ApplicationWindow {
             validator: IntValidator { bottom: 1024; top: 65535 }
             text: root.defaultPort.toString()
 
-            Keys.onReturnPressed: submit()
+            Keys.onReturnPressed: root.submit()
         }
 
         RowLayout {
             Label {
-                text: qsTr("Web:")
+                text: qsTr("Web")
             }
 
             Item {
@@ -63,7 +60,7 @@ ApplicationWindow {
             }
 
             Switch {
-                id: enableWeb
+                id: webEnabled
                 checked: false
             }
         }
@@ -81,14 +78,14 @@ ApplicationWindow {
                 id: cancelButton
                 text: qsTr("Cancel")
 
-                onClicked: cancel()
+                onClicked: root.cancel()
             }
 
             Button {
                 id: createChannelButton
                 text: qsTr("OK")
 
-                onClicked: submit()
+                onClicked: root.submit()
             }
         }
     }
@@ -96,20 +93,14 @@ ApplicationWindow {
     Shortcut {
         sequence: StandardKey.Cancel
 
-        onActivated: cancel()
+        onActivated: root.cancel()
     }
 
-    Utils {
-        id: utils
-    }
-
-    onClosing: {
-        root.destroy();
-    }
+    onClosing: root.destroy
 
     function submit() {
         if (channelName.length > 0 && channelAddress.currentText.length > 0 && channelPort.length > 0) {
-            root.accepted(channelName.text, channelAddress.currentText, parseInt(channelPort.text), enableWeb.checked);
+            root.accepted(channelName.text, channelAddress.currentText, parseInt(channelPort.text), webEnabled.checked);
             root.close();
         }
     }

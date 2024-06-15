@@ -12,8 +12,8 @@ Rectangle {
         anchors.fill: parent
         flickableDirection: Flickable.VerticalFlick
         contentHeight: content.height
-        topMargin: 0
         clip: true
+        topMargin: 0
 
         ColumnLayout {
             id: content

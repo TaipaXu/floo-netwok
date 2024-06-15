@@ -8,6 +8,8 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QFileInfo>
+#include "models/file.hpp"
+#include "models/myFile.hpp"
 #include "network/sendManager.hpp"
 #include "network/receiveManager.hpp"
 #include "network/webServer.hpp"
@@ -15,102 +17,98 @@
 namespace Network
 {
     Server::Server(QObject *parent)
-        : QObject(parent), tcpStatus{Status::Unconnected}, wsStatus{Status::Unconnected}, tcpServer{nullptr}, wsServer{nullptr}, webServer{nullptr}
+        : QObject(parent),
+          tcpStatus{Status::Unconnected},
+          tcpServer{nullptr},
+          wsStatus{Status::Unconnected},
+          wsServer{nullptr},
+          webServer{nullptr}
     {
     }
 
     Server::~Server()
     {
-        qDebug() << "server destructor";
-        stop();
+        stopTCP();
+        stopWS();
     }
 
-    bool Server::start(const QString &address, int port)
+    bool Server::startTCP(const QString &address, int port)
     {
-        qDebug() << "start" << address << port;
         tcpStatus = Status::Connecting;
         emit tcpStatusChanged();
         if (!tcpServer)
         {
             tcpServer = new QTcpServer(this);
             connect(tcpServer, &QTcpServer::newConnection, this, &Server::handleTcpNewConnection);
-            connect(tcpServer, &QTcpServer::acceptError, [this](QAbstractSocket::SocketError socketError) {
-                qDebug() << "server accept error" << socketError;
-            });
         }
-
         bool result = tcpServer->listen(QHostAddress(address), port);
         if (result)
         {
-            qDebug() << "Server started at" << address << port;
             tcpStatus = Status::Connected;
         }
         else
         {
-            qDebug() << "Server start failed";
             tcpStatus = Status::Unconnected;
         }
         emit tcpStatusChanged();
         return result;
     }
 
-    void Server::startWs(const QString &address)
-    {
-        qDebug() << "start ws" << address;
-        wsStatus = Status::Connecting;
-        emit wsStatusChanged();
-        if (!wsServer)
-        {
-            wsServer = new QWebSocketServer("Server", QWebSocketServer::NonSecureMode, this);
-            connect(wsServer, &QWebSocketServer::newConnection, this, &Server::handleWsNewConnection);
-            connect(wsServer, &QWebSocketServer::serverError, [this](QWebSocketProtocol::CloseCode closeCode) {
-                qDebug() << "ws server error" << closeCode;
-            });
-        }
-
-        int port = 1000;
-        while (!wsServer->listen(QHostAddress(address), port))
-        {
-            port++;
-        }
-        qDebug() << "port" << port;
-        wsStatus = Status::Connected;
-        emit wsStatusChanged();
-
-        webServer = new WebServer();
-        int webServerPort = webServer->start(address);
-        qDebug() << "webServerPort" << webServerPort;
-
-        emit wsInfoChanged(port, webServerPort);
-    }
-
-    void Server::stop()
+    void Server::stopTCP()
     {
         if (tcpServer)
         {
             tcpServer->deleteLater();
             tcpServer = nullptr;
         }
+        tcpStatus = Status::Unconnected;
+        emit tcpStatusChanged();
 
         for (auto &&connection : connections)
         {
-            connection->deleteLater();
+            if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
+            {
+                connection->deleteLater();
+            }
+            connections.removeOne(connection);
         }
-        connections.clear();
-
-        tcpStatus = Status::Unconnected;
-        emit tcpStatusChanged();
         emit connectionsChanged();
         broadcastFiles();
     }
 
-    void Server::stopWs()
+    void Server::startWS(const QString &address)
+    {
+        wsStatus = Status::Connecting;
+        emit wsStatusChanged();
+        if (!wsServer)
+        {
+            wsServer = new QWebSocketServer("Server", QWebSocketServer::NonSecureMode, this);
+            connect(wsServer, &QWebSocketServer::newConnection, this, &Server::handleWSNewConnection);
+        }
+
+        int port = 1024;
+        while (!wsServer->listen(QHostAddress(address), port))
+        {
+            port++;
+        }
+        wsStatus = Status::Connected;
+        emit wsStatusChanged();
+
+        webServer = new WebServer();
+        const int webServerPort = webServer->start(address);
+
+        emit wsInfoChanged(port, webServerPort);
+    }
+
+    void Server::stopWS()
     {
         if (wsServer)
         {
             wsServer->deleteLater();
             wsServer = nullptr;
         }
+        wsStatus = Status::Unconnected;
+        emit wsStatusChanged();
 
         for (auto &&connection : connections)
         {
@@ -120,9 +118,6 @@ namespace Network
             }
             connections.removeOne(connection);
         }
-
-        wsStatus = Status::Unconnected;
-        emit wsStatusChanged();
         emit connectionsChanged();
         broadcastFiles();
 
@@ -133,19 +128,83 @@ namespace Network
         }
     }
 
+    void Server::addMyFiles(const QList<QUrl> &myFiles)
+    {
+        bool appended = false;
+        for (const QUrl &url : myFiles)
+        {
+            auto found = std::find_if(this->myFiles.begin(), this->myFiles.end(), [&url](const Model::MyFile *const myFile) {
+                return myFile->getPath() == url.toLocalFile();
+            });
+            if (found == this->myFiles.end())
+            {
+                const QFileInfo fileInfo(url.toLocalFile());
+                this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+                if (!appended)
+                {
+                    appended = true;
+                }
+            }
+        }
+
+        if (appended)
+        {
+            emit myFilesChanged();
+            broadcastFiles();
+        }
+    }
+
+    void Server::removeMyFile(Model::MyFile *const myFile)
+    {
+        myFiles.removeOne(myFile);
+        myFile->deleteLater();
+
+        emit myFilesChanged();
+        broadcastFiles();
+    }
+
+    void Server::requestDownloadFile(const Model::File *const file) const
+    {
+        for (auto &&connection : connections)
+        {
+            if (connection->getFiles().contains(file))
+            {
+                QJsonObject json{
+                    {"type", "prepareUpload"},
+                    {"id", file->getId()},
+                    {"ip", "server"},
+                };
+                if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
+                {
+                    connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                }
+                else if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
+                {
+                    GET_RECEIVE_MANAGER_INSTANCE
+                    const int port = receiveManager->createHttpReceiver();
+                    json["port"] = port;
+                    connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
+                }
+                break;
+            }
+        }
+    }
+
     void Server::broadcastFiles() const
     {
-        qDebug() << "broadcast files";
         if (myFiles.empty() && connections.empty())
         {
             return;
         }
 
-        QJsonObject json;
+        QJsonObject json{
+            {"type", "files"},
+        };
         json["type"] = "files";
-        QJsonObject ipFiles;
-        ipFiles["server"] = Model::toJson(myFiles);
-        for (Model::Connection *connection : connections)
+        QJsonObject ipFiles{
+            {"server", Model::toJson(myFiles)},
+        };
+        for (auto &&connection : connections)
         {
             ipFiles[connection->getAddress()] = Model::toJson(connection->getFiles());
 
@@ -158,7 +217,7 @@ namespace Network
 
         const QJsonDocument doc(json);
         const QByteArray data = doc.toJson(QJsonDocument::Compact);
-        for (Model::Connection *connection : connections)
+        for (auto &&connection : connections)
         {
             if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
             {
@@ -172,9 +231,8 @@ namespace Network
         }
     }
 
-    void Server::addClientFiles(QTcpSocket *socket, const QJsonArray &filesArray)
+    void Server::addClientFiles(const QTcpSocket *const socket, const QJsonArray &filesArray) const
     {
-        qDebug() << "add client files";
         Model::Connection *connection = nullptr;
         for (Model::Connection *conn : connections)
         {
@@ -198,14 +256,12 @@ namespace Network
             }
             connection->setFiles(files);
             emit connectionsChanged();
+            broadcastFiles();
         }
-
-        broadcastFiles();
     }
 
-    void Server::addWsClientFiles(QWebSocket *socket, const QJsonArray &filesArray)
+    void Server::addWSClientFiles(const QWebSocket *const socket, const QJsonArray &filesArray) const
     {
-        qDebug() << "add ws client files";
         Model::Connection *connection = nullptr;
         for (Model::Connection *conn : connections)
         {
@@ -229,38 +285,39 @@ namespace Network
             }
             connection->setFiles(files);
             emit connectionsChanged();
+            broadcastFiles();
         }
-
-        broadcastFiles();
     }
 
-    void Server::handleClientRequestDownloadFile(QTcpSocket *clientSocket, const QString &id)
+    void Server::handleClientRequestDownloadFile(QTcpSocket *const clientSocket, const QString &id) const
     {
-        qDebug() << "handle client request download file";
         for (auto &&file : myFiles)
         {
             if (file->getId() == id)
             {
-                const int port = Network::SendManager::getInstance()->createSender(file->getPath());
-                QJsonObject json;
-                json["type"] = "uploadFileReady";
-                json["id"] = id;
-                json["ip"] = tcpServer->serverAddress().toString();
-                json["port"] = port;
+                GET_SEND_MANAGER_INSTANCE
+                const int port = sendManager->createSender(file->getPath());
+                QJsonObject json{
+                    {"type", "uploadFileReady"},
+                    {"id", id},
+                    {"ip", tcpServer->serverAddress().toString()},
+                    {"port", port},
+                };
                 clientSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                break;
+                return;
             }
         }
 
-        for (Model::Connection *connection : connections)
+        for (auto &&connection : connections)
         {
             for (auto &&file : connection->getFiles())
             {
                 if (file->getId() == id)
                 {
-                    QJsonObject json;
-                    json["id"] = id;
-                    json["ip"] = connection->getAddress();
+                    QJsonObject json{
+                        {"id", id},
+                        {"ip", connection->getAddress()},
+                    };
                     if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
                     {
                         json["type"] = "prepareUpload";
@@ -270,66 +327,68 @@ namespace Network
                         json["type"] = "prepareDownloadForWeb";
                     }
                     clientSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                    break;
+                    return;
                 }
             }
         }
     }
 
-    void Server::handleWsClientRequestDownloadFile(QWebSocket *clientSocket, const QString &id)
+    void Server::handleWSClientRequestDownloadFile(QWebSocket *const clientSocket, const QString &id) const
     {
-        qDebug() << "handle ws client request download file";
         for (auto &&file : myFiles)
         {
             if (file->getId() == id)
             {
-                const int port = Network::SendManager::getInstance()->createHttpSender(file->getPath());
-                QJsonObject json;
-                json["type"] = "uploadFileReady";
-                json["id"] = id;
-                json["ip"] = wsServer->serverAddress().toString();
-                json["port"] = port;
+                GET_SEND_MANAGER_INSTANCE
+                const int port = sendManager->createHttpSender(file->getPath());
+                QJsonObject json{
+                    {"type", "uploadFileReady"},
+                    {"id", id},
+                    {"ip", wsServer->serverAddress().toString()},
+                    {"port", port},
+                };
                 clientSocket->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                break;
+                return;
             }
         }
 
-        for (Model::Connection *connection : connections)
+        for (auto &&connection : connections)
         {
             for (auto &&file : connection->getFiles())
             {
-                if (file->getId() == id)
+                if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket && file->getId() == id)
                 {
-                    QJsonObject json;
-                    json["type"] = "prepareUploadForWeb";
-                    json["id"] = id;
-                    json["ip"] = clientSocket->peerAddress().toString();
+                    QJsonObject json{
+                        {"type", "prepareUploadForWeb"},
+                        {"id", id},
+                        {"ip", clientSocket->peerAddress().toString()},
+                    };
                     connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                    break;
+                    return;
                 }
             }
         }
     }
 
-    void Server::handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
+    void Server::handleClientReadyToUploadFile(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId) const
     {
-        qDebug() << "handle client ready to upload file";
         if (reveiverIp == "server")
         {
-            qDebug() << "server ready to upload file" << senderIp << reveiverIp << port;
-            Network::ReceiveManager::getInstance()->createReceiver(senderIp, port);
+            GET_RECEIVE_MANAGER_INSTANCE
+            receiveManager->createReceiver(senderIp, port);
         }
         else
         {
-            for (Model::Connection *connection : connections)
+            for (auto &&connection : connections)
             {
-                if (connection->getAddress() == reveiverIp)
+                if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket && connection->getAddress() == reveiverIp)
                 {
-                    QJsonObject json;
-                    json["type"] = "uploadFileReady";
-                    json["id"] = fileId;
-                    json["ip"] = senderIp;
-                    json["port"] = port;
+                    QJsonObject json{
+                        {"type", "uploadFileReady"},
+                        {"id", fileId},
+                        {"ip", senderIp},
+                        {"port", port},
+                    };
                     connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
                     break;
                 }
@@ -337,104 +396,37 @@ namespace Network
         }
     }
 
-    void Server::handleClientReadyToUploadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
+    void Server::handleClientReadyToUploadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId) const
     {
-        qDebug() << "handle client ready to upload file for web";
-        qDebug() << "senderIp" << senderIp << "reveiverIp" << reveiverIp << "port" << port << "fileId" << fileId;
-
-        for (Model::Connection *connection : connections)
+        for (auto &&connection : connections)
         {
-            if (connection->getAddress() == reveiverIp)
+            if (connection->getLinkType() == Model::Connection::LinkType::WSSocket && connection->getAddress() == reveiverIp)
             {
-                QJsonObject json;
-                json["type"] = "uploadFileReady";
-                json["id"] = fileId;
-                json["ip"] = senderIp;
-                json["port"] = port;
+                QJsonObject json{
+                    {"type", "uploadFileReady"},
+                    {"id", fileId},
+                    {"ip", senderIp},
+                    {"port", port},
+                };
                 connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
                 break;
             }
         }
     }
 
-    void Server::handleClientReadyToDownloadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId)
+    void Server::handleClientReadyToDownloadFileForWeb(const QString &senderIp, const QString &reveiverIp, int port, const QString &fileId) const
     {
-        qDebug() << "handle client ready to download file for web";
-        qDebug() << "senderIp" << senderIp << "reveiverIp" << reveiverIp << "port" << port << "fileId" << fileId;
-
-        for (Model::Connection *connection : connections)
+        for (auto &&connection : connections)
         {
-            if (connection->getAddress() == senderIp)
+            if (connection->getLinkType() == Model::Connection::LinkType::WSSocket && connection->getAddress() == senderIp)
             {
-                QJsonObject json;
-                json["type"] = "prepareUpload";
-                json["id"] = fileId;
-                json["ip"] = reveiverIp;
-                json["port"] = port;
+                QJsonObject json{
+                    {"type", "prepareUpload"},
+                    {"id", fileId},
+                    {"ip", reveiverIp},
+                    {"port", port},
+                };
                 connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                break;
-            }
-        }
-    }
-
-    void Server::addMyFiles(const QList<QUrl> &myFiles)
-    {
-        qDebug() << "Server::addMyFiles";
-        bool appended = false;
-        for (const QUrl &url : myFiles)
-        {
-            auto found = std::find_if(this->myFiles.begin(), this->myFiles.end(), [&url](Model::MyFile *myFile) {
-                return myFile->getPath() == url.toLocalFile();
-            });
-            if (found == this->myFiles.end())
-            {
-                QFileInfo fileInfo(url.toLocalFile());
-                this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
-                if (!appended)
-                {
-                    appended = true;
-                }
-            }
-        }
-
-        if (appended)
-        {
-            emit myFilesChanged();
-            broadcastFiles();
-        }
-    }
-
-    void Server::removeMyFile(Model::MyFile *myFile)
-    {
-        qDebug() << "Server::removeMyFile";
-        myFiles.removeOne(myFile);
-        myFile->deleteLater();
-
-        emit myFilesChanged();
-        broadcastFiles();
-    }
-
-    void Server::requestDownloadFile(Model::File *file)
-    {
-        qDebug() << "Server::downloadFile";
-        for (Model::Connection *connection : connections)
-        {
-            if (connection->getFiles().contains(file))
-            {
-                QJsonObject json;
-                json["type"] = "prepareUpload";
-                json["id"] = file->getId();
-                json["ip"] = "server";
-                if (connection->getLinkType() == Model::Connection::LinkType::TcpSocket)
-                {
-                    connection->getTcpSocket()->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                }
-                else if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
-                {
-                    const int port = ReceiveManager::getInstance()->createHttpReceiver();
-                    json["port"] = port;
-                    connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
-                }
                 break;
             }
         }
@@ -442,24 +434,20 @@ namespace Network
 
     void Server::handleTcpNewConnection()
     {
-        qDebug() << "server new connection";
         QTcpSocket *const socket = tcpServer->nextPendingConnection();
         connect(socket, &QTcpSocket::readyRead, this, &Server::handleTcpReadyRead);
         connect(socket, &QTcpSocket::disconnected, this, &Server::handleTcpDisconnected);
         connections.push_back(new Model::Connection(socket));
         emit connectionsChanged();
-
         broadcastFiles();
     }
 
-    void Server::handleTcpReadyRead()
+    void Server::handleTcpReadyRead() const
     {
-        qDebug() << "server received message";
-        QTcpSocket *const socket = qobject_cast<QTcpSocket *>(sender());
+        QTcpSocket *const socket = qobject_cast<QTcpSocket *const>(sender());
         if (socket)
         {
             QByteArray data = socket->readAll();
-            qDebug() << "data" << data;
             QJsonParseError jsonError;
             QJsonDocument json = QJsonDocument::fromJson(data, &jsonError);
             if (!json.isNull() && jsonError.error == QJsonParseError::NoError)
@@ -468,7 +456,6 @@ namespace Network
                 const QString type = obj.value("type").toString();
                 if (type == "files")
                 {
-                    qDebug() << "files";
                     const QJsonArray filesArray = obj.value("files").toArray();
                     addClientFiles(socket, filesArray);
                 }
@@ -504,11 +491,9 @@ namespace Network
 
     void Server::handleTcpDisconnected()
     {
-        qDebug() << "server disconnected";
-
         if (tcpServer)
         {
-            QTcpSocket *socket = qobject_cast<QTcpSocket *>(sender());
+            QTcpSocket *const socket = qobject_cast<QTcpSocket *>(sender());
             if (socket)
             {
                 socket->deleteLater();
@@ -526,21 +511,18 @@ namespace Network
         }
     }
 
-    void Server::handleWsNewConnection()
+    void Server::handleWSNewConnection()
     {
-        qDebug() << "ws new connection";
         QWebSocket *const socket = wsServer->nextPendingConnection();
-        connect(socket, &QWebSocket::textMessageReceived, this, &Server::handleWsTextMessageReceived);
-        connect(socket, &QWebSocket::disconnected, this, &Server::handleWsDisconnected);
+        connect(socket, &QWebSocket::textMessageReceived, this, &Server::handleWSTextMessageReceived);
+        connect(socket, &QWebSocket::disconnected, this, &Server::handleWSDisconnected);
         connections.push_back(new Model::Connection(socket));
         emit connectionsChanged();
-
         broadcastFiles();
     }
 
-    void Server::handleWsTextMessageReceived(const QString &message)
+    void Server::handleWSTextMessageReceived(const QString &message) const
     {
-        qDebug() << "ws received message" << message;
         QWebSocket *const socket = qobject_cast<QWebSocket *>(sender());
         if (socket)
         {
@@ -553,23 +535,22 @@ namespace Network
                 if (type == "files")
                 {
                     const QJsonArray filesArray = obj.value("files").toArray();
-                    addWsClientFiles(socket, filesArray);
+                    addWSClientFiles(socket, filesArray);
                 }
                 else if (type == "downloadFile")
                 {
                     const QString code = obj["id"].toString();
-                    handleWsClientRequestDownloadFile(socket, code);
+                    handleWSClientRequestDownloadFile(socket, code);
                 }
             }
         }
     }
 
-    void Server::handleWsDisconnected()
+    void Server::handleWSDisconnected()
     {
-        qDebug() << "ws disconnected";
         if (wsServer)
         {
-            QWebSocket *socket = qobject_cast<QWebSocket *>(sender());
+            QWebSocket *const socket = qobject_cast<QWebSocket *>(sender());
             if (socket)
             {
                 socket->deleteLater();

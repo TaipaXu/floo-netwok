@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import model.file
 import model.myFile as Model
 
 Rectangle {
@@ -24,28 +23,27 @@ Rectangle {
             spacing: 5
 
             Label {
+                Layout.fillWidth: true
                 text: root.file.name
                 font.pixelSize: 16
-                Layout.fillWidth: true
                 elide: Text.ElideLeft
             }
 
             Item {
-                width: 1
                 height: 5
             }
 
             Label {
+                Layout.fillWidth: true
                 text: root.file.size
                 font.pixelSize: 10
-                Layout.fillWidth: true
                 elide: Text.ElideLeft
             }
 
             Label {
+                Layout.fillWidth: true
                 text: root.file.path
                 font.pixelSize: 12
-                Layout.fillWidth: true
                 elide: Text.ElideLeft
             }
         }

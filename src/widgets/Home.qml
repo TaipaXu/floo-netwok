@@ -11,6 +11,16 @@ Rectangle {
     signal requestCreateChannel
     signal requestJoinChannel
 
+    component RawButton: Button {
+        flat: true
+        font.pixelSize: 30
+
+        HoverHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            cursorShape: Qt.PointingHandCursor
+        }
+    }
+
     Column {
         anchors.centerIn: parent
 
@@ -22,29 +32,17 @@ Rectangle {
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
 
-            Button {
+            RawButton {
                 text: "Create a channel"
-                flat: true
-                font.pixelSize: 30
 
                 onClicked: root.requestCreateChannel()
 
-                HoverHandler {
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                    cursorShape: Qt.PointingHandCursor
-                }
             }
 
-            Button {
+            RawButton {
                 text: "Join a channel"
-                flat: true
-                font.pixelSize: 30
-                onClicked: root.requestJoinChannel()
 
-                HoverHandler {
-                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                    cursorShape: Qt.PointingHandCursor
-                }
+                onClicked: root.requestJoinChannel()
             }
         }
 

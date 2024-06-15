@@ -23,21 +23,20 @@ Rectangle {
             spacing: 5
 
             Label {
+                Layout.fillWidth: true
                 text: root.file.name
                 font.pixelSize: 16
-                Layout.fillWidth: true
                 elide: Text.ElideLeft
             }
 
             Item {
-                width: 1
                 height: 5
             }
 
             Label {
+                Layout.fillWidth: true
                 text: root.file.size
                 font.pixelSize: 10
-                Layout.fillWidth: true
                 elide: Text.ElideLeft
             }
         }

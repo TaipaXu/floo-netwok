@@ -21,7 +21,6 @@ namespace Network
     {
         httpServer = new QHttpServer(this);
         httpServer->route("/web/<arg>", QHttpServerRequest::Method::Get, [](const QUrl &path, const QHttpServerRequest &request) {
-            qDebug() << "request" << request.url() << path;
             return QHttpServerResponse::fromFile(QString(":/web/%1").arg(path.toString()));
         });
         int port = 2000;
@@ -29,7 +28,6 @@ namespace Network
         {
             port++;
         }
-        qDebug() << "port" << port;
         return port;
     }
 } // namespace Network

@@ -11,19 +11,19 @@ Platform.SystemTrayIcon {
             Platform.MenuItem {
                 text: qsTr("About me")
 
-                onTriggered: Qt.openUrlExternally("https://github.com/TaipaXu")
+                onTriggered: utils.openMyGithubPage()
             }
 
             Platform.MenuItem {
                 text: qsTr("Project domain")
 
-                onTriggered: Qt.openUrlExternally("https://github.com/TaipaXu/floo-network")
+                onTriggered: utils.openThisProjectPage()
             }
 
             Platform.MenuItem {
                 text: qsTr("Bug report")
 
-                onTriggered: Qt.openUrlExternally("https://github.com/TaipaXu/floo-network/issues")
+                onTriggered: utils.openThisProjectIssuesPage()
             }
         }
 

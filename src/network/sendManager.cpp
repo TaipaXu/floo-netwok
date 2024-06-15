@@ -9,13 +9,9 @@ namespace Network
         return &instance;
     }
 
-    SendManager::~SendManager()
-    {
-    }
-
     int SendManager::createSender(const QString &path)
     {
-        Sender *sender = new Sender(this);
+        Sender *const sender = new Sender(this);
         senders.append(sender);
         emit sendersChanged();
         return sender->startSendFile(path);
@@ -23,9 +19,7 @@ namespace Network
 
     int SendManager::createHttpSender(const QString &path)
     {
-        HttpSender *sender = new HttpSender(this);
-        // senders.append(sender);
-        // emit sendersChanged();
+        HttpSender *const sender = new HttpSender(this);
         return sender->startSendFile(path);
     }
 } // namespace Network

@@ -12,7 +12,7 @@ namespace Model
 
     public:
         MyFile(const QString &name, long long int size, const QString &path, QObject *parent = nullptr);
-        ~MyFile();
+        ~MyFile() = default;
 
         const QString &getPath() const;
 

@@ -14,12 +14,9 @@ namespace Network
 
     public:
         HttpSender(QObject *parent = nullptr);
-        ~HttpSender();
+        ~HttpSender() = default;
 
         int startSendFile(const QString &path);
-
-    private slots:
-        void handleNewConnection();
 
     private:
         QHttpServer *httpServer;

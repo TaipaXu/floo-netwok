@@ -14,7 +14,7 @@ namespace Network
 
     public:
         static ReceiveManager *getInstance();
-        ~ReceiveManager();
+        ~ReceiveManager() = default;
 
         void createReceiver(const QString &ip, int port);
         int createHttpReceiver();
@@ -36,3 +36,5 @@ namespace Network
         return receivers;
     }
 } // namespace Network
+
+#define GET_RECEIVE_MANAGER_INSTANCE ReceiveManager *receiveManager = Network::ReceiveManager::getInstance();

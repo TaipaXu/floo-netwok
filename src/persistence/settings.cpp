@@ -27,7 +27,7 @@ namespace Persistence
 
     QString Settings::getSettingsFilePath() const
     {
-        const QString fileName = QString("%1.ini").arg("settings");
+        const QString fileName = QStringLiteral("%1.ini").arg("settings");
         const QString filePath = Persistence::getSettingsFilePath(fileName);
 
         return filePath;
