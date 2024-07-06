@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <QObject>
 #include <QAbstractSocket>
 #include "models/connection.hpp"
@@ -41,7 +42,7 @@ namespace Network
         Q_INVOKABLE void stop();
         Q_INVOKABLE void addMyFiles(const QList<QUrl> &myFiles);
         Q_INVOKABLE void removeMyFile(Model::MyFile *const myFile);
-        Q_INVOKABLE void requestDownloadFile(const Model::File *const file) const;
+        Q_INVOKABLE void requestDownloadFile(const Model::File *const file);
 
     signals:
         void statusChanged() const;
@@ -55,10 +56,10 @@ namespace Network
         const QList<Model::MyFile *> &getMyFiles() const;
         void sendFilesInfoToServer() const;
         void handleRequestFiles(const QJsonObject &ipFiles);
-        void handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const;
-        void handleRequestPrepareUploadFileForWeb(const QString &fileId, const QString &reveiverIp) const;
-        void handleRequestUploadFileReady(const QString &ip, int port) const;
-        void handleRequestPrepareDownloadFileForWeb(const QString &fileId, const QString &senderIp) const;
+        void handleRequestPrepareUploadFile(const QString &recordId, const QString &fileId) const;
+        void handleRequestPrepareUploadFileForWeb(const QString &recordId, const QString &fileId) const;
+        void handleRequestUploadFileReady(const QString &ip, int port, const QString &fileId);
+        void handleRequestPrepareDownloadFileFromWeb(const QString &recordId) const;
 
     private slots:
         void handleConnected();
@@ -71,6 +72,7 @@ namespace Network
         QList<Model::MyFile *> myFiles;
         QTcpSocket *tcpSocket;
         QList<Model::Connection *> connections;
+        std::map<QString, int> requestingFiles;
     };
 
     inline Client::Status Client::getStatus() const

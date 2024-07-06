@@ -41,11 +41,11 @@ Rectangle {
                 visible: network.tcpStatus === Network.Server.Unconnected
 
                 onClicked: {
-                    const result = network.startTCP(root.channel.address, root.channel.port);
+                    const result = network.startTcp(root.channel.address, root.channel.port);
                     if (!result) {
                         messageDialog.open();
                     } else if (enableWeb.checked) {
-                        network.startWS(root.channel.address);
+                        network.startWs(root.channel.address);
                     }
                 }
             }
@@ -56,10 +56,10 @@ Rectangle {
                 visible: network.tcpStatus === Network.Server.Connected && network.wsStatus !== Network.Server.Connecting
 
                 onClicked: {
-                    network.stopTCP();
+                    network.stopTcp();
 
                     if (network.wsStatus === Network.Server.Connected) {
-                        network.stopWS();
+                        network.stopWs();
                     }
                 }
             }
@@ -82,11 +82,11 @@ Rectangle {
                 onCheckedChanged: {
                     root.channel.webEnabled = checked;
                     if (checked && network.tcpStatus === Network.Server.Connected && network.wsStatus === Network.Server.Unconnected) {
-                        network.startWS(root.channel.address);
+                        network.startWs(root.channel.address);
                         return;
                     }
                     if (!checked && network.wsStatus === Network.Server.Connected) {
-                        network.stopWS();
+                        network.stopWs();
                     }
                 }
             }

@@ -1,12 +1,11 @@
 #include "./utils.hpp"
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 #include <QApplication>
 #include <QDesktopServices>
-#include <QUrl>
 #include <QNetworkInterface>
-#include <QUuid>
 #include <QClipboard>
+#include <QUrl>
 #include "appConfig.hpp"
 
 Utils::Utils(QObject *parent)
@@ -52,25 +51,29 @@ bool Utils::isIPv4Address(const QString &address)
     return hostAddress.protocol() == QAbstractSocket::IPv4Protocol;
 }
 
+constexpr const double KB = 1024.0;
+constexpr const double MB = KB * 1024.0;
+constexpr const double GB = MB * 1024.0;
+
 QString Utils::getReadableSize(long long int size)
 {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(1);
-    if (size < 1024)
+    if (size < KB)
     {
         ss << size << "B";
     }
-    else if (size < 1024 * 1024)
+    else if (size < MB)
     {
-        ss << size / 1024.0 << "KB";
+        ss << size / KB << "KB";
     }
-    else if (size < 1024 * 1024 * 1024)
+    else if (size < GB)
     {
-        ss << size / 1024.0 / 1024 << "MB";
+        ss << size / MB << "MB";
     }
     else
     {
-        ss << size / 1024.0 / 1024 / 1024 << "GB";
+        ss << size / GB << "GB";
     }
     return QString::fromStdString(ss.str());
 }

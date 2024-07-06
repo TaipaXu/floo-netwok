@@ -92,11 +92,20 @@ namespace Network
         sendFilesInfoToServer();
     }
 
-    void Client::requestDownloadFile(const Model::File *const file) const
+    void Client::requestDownloadFile(const Model::File *const file)
     {
+        const QString fileId = file->getId();
+        if (requestingFiles.contains(fileId))
+        {
+            requestingFiles[fileId]++;
+        }
+        else
+        {
+            requestingFiles[fileId] = 1;
+        }
         QJsonObject json{
             {"type", "downloadFile"},
-            {"id", file->getId()},
+            {"fileId", fileId},
         };
         tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
     }
@@ -142,9 +151,9 @@ namespace Network
                 for (auto &&fileJson : filesArray)
                 {
                     const QJsonObject fileObject = fileJson.toObject();
-                    const QString id = fileObject.value("id").toString();
-                    const QString name = fileObject.value("name").toString();
-                    const int size = fileObject.value("size").toInteger();
+                    const QString id = fileObject["id"].toString();
+                    const QString name = fileObject["name"].toString();
+                    const int size = fileObject["size"].toInteger();
                     files.push_back(new Model::File(id, name, size, connection));
                 }
                 connection->setFiles(files);
@@ -154,7 +163,7 @@ namespace Network
         }
     }
 
-    void Client::handleRequestPrepareUploadFile(const QString &fileId, const QString &reveiverIp) const
+    void Client::handleRequestPrepareUploadFile(const QString &recordId, const QString &fileId) const
     {
         auto file = std::find_if(myFiles.begin(), myFiles.end(), [&fileId](const Model::MyFile *const myFile) {
             return myFile->getId() == fileId;
@@ -165,15 +174,14 @@ namespace Network
             const int port = sendManager->createSender((*file)->getPath());
             QJsonObject json{
                 {"type", "readyToUpload"},
-                {"ip", reveiverIp},
+                {"recordId", recordId},
                 {"port", port},
-                {"id", fileId},
             };
             tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
         }
     }
 
-    void Client::handleRequestPrepareUploadFileForWeb(const QString &fileId, const QString &reveiverIp) const
+    void Client::handleRequestPrepareUploadFileForWeb(const QString &recordId, const QString &fileId) const
     {
         auto file = std::find_if(myFiles.begin(), myFiles.end(), [&fileId](const Model::MyFile *const myFile) {
             return myFile->getId() == fileId;
@@ -184,28 +192,35 @@ namespace Network
             const int port = sendManager->createHttpSender((*file)->getPath());
             QJsonObject json{
                 {"type", "readyToUploadForWeb"},
-                {"ip", reveiverIp},
+                {"recordId", recordId},
                 {"port", port},
-                {"id", fileId},
             };
             tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
         }
     }
 
-    void Client::handleRequestUploadFileReady(const QString &ip, int port) const
+    void Client::handleRequestUploadFileReady(const QString &ip, int port, const QString &fileId)
     {
-        GET_RECEIVE_MANAGER_INSTANCE
-        receiveManager->createReceiver(ip, port);
+        if (requestingFiles.contains(fileId))
+        {
+            requestingFiles[fileId]--;
+            if (requestingFiles[fileId] == 0)
+            {
+                requestingFiles.erase(fileId);
+            }
+
+            GET_RECEIVE_MANAGER_INSTANCE
+            receiveManager->createReceiver(ip, port);
+        }
     }
 
-    void Client::handleRequestPrepareDownloadFileForWeb(const QString &fileId, const QString &senderIp) const
+    void Client::handleRequestPrepareDownloadFileFromWeb(const QString &recordId) const
     {
         GET_RECEIVE_MANAGER_INSTANCE
         const int port = receiveManager->createHttpReceiver();
         QJsonObject json{
-            {"type", "readyToDownloadForWeb"},
-            {"id", fileId},
-            {"ip", senderIp},
+            {"type", "readyToDownloadFromWeb"},
+            {"recordId", recordId},
             {"port", port},
         };
         tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
@@ -234,27 +249,27 @@ namespace Network
             }
             else if (type == "prepareUpload")
             {
-                const QString fileId = obj["id"].toString();
-                const QString reveiverIp = obj["ip"].toString();
-                handleRequestPrepareUploadFile(fileId, reveiverIp);
+                const QString recordId = obj["recordId"].toString();
+                const QString fileId = obj["fileId"].toString();
+                handleRequestPrepareUploadFile(recordId, fileId);
             }
             else if (type == "prepareUploadForWeb")
             {
-                const QString fileId = obj["id"].toString();
-                const QString reveiverIp = obj["ip"].toString();
-                handleRequestPrepareUploadFileForWeb(fileId, reveiverIp);
+                const QString recordId = obj["recordId"].toString();
+                const QString fileId = obj["fileId"].toString();
+                handleRequestPrepareUploadFileForWeb(recordId, fileId);
             }
             else if (type == "uploadFileReady")
             {
                 const QString senderIp = obj["ip"].toString();
                 const int port = obj["port"].toInt();
-                handleRequestUploadFileReady(senderIp, port);
+                const QString fileId = obj["fileId"].toString();
+                handleRequestUploadFileReady(senderIp, port, fileId);
             }
-            else if (type == "prepareDownloadForWeb")
+            else if (type == "prepareDownloadFromWeb")
             {
-                const QString fileId = obj["id"].toString();
-                const QString senderIp = obj["ip"].toString();
-                handleRequestPrepareDownloadFileForWeb(fileId, senderIp);
+                const QString recordId = obj["recordId"].toString();
+                handleRequestPrepareDownloadFileFromWeb(recordId);
             }
         }
     }
