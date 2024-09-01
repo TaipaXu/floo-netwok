@@ -1,10 +1,7 @@
 #include "./httpReceiver.hpp"
 #include <QHttpServer>
-#include <QFile>
 #include <QSaveFile>
 #include <QIODevice>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include "persistence/settings.hpp"
 
 namespace Network
@@ -17,6 +14,15 @@ namespace Network
     int HttpReceiver::startReceiveFile()
     {
         httpServer = new QHttpServer(this);
+
+        httpServer->route("/", QHttpServerRequest::Method::Options, [this](const QHttpServerRequest &request) {
+            QHttpServerResponse response(QHttpServerResponse::StatusCode::Ok);
+            response.addHeader("Access-Control-Allow-Origin", "*");
+            response.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+            response.addHeader("Access-Control-Allow-Headers", "*");
+            return response;
+        });
+
         httpServer->route("/", QHttpServerRequest::Method::Post, [this](const QHttpServerRequest &request) {
             if (visited)
             {
@@ -29,14 +35,21 @@ namespace Network
             {
                 visited = true;
 
-                const QByteArray requestData = request.body();
-                const QJsonObject json = QJsonDocument::fromJson(requestData).object();
+                QString fileName;
+                for (auto &&header : request.headers())
+                {
+                    const QString key = header.first;
+                    if (key == QStringLiteral("Filename"))
+                    {
+                        fileName = header.second;
+                    }
+                }
                 std::unique_ptr<Persistence::Settings> settings = std::make_unique<Persistence::Settings>();
-                QString filePath = settings->getDownloadPath() + "/" + json["name"].toString();
+                QString filePath = settings->getDownloadPath() + "/" + fileName;
                 QSaveFile file(filePath);
                 if (file.open(QIODevice::WriteOnly))
                 {
-                    file.write(QByteArray::fromBase64(json["file"].toString().toUtf8()));
+                    file.write(request.body());
                     file.commit();
                     QHttpServerResponse response(QHttpServerResponse::StatusCode::Ok);
                     response.addHeader("Access-Control-Allow-Origin", "*");
