@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <QObject>
 
 QT_BEGIN_NAMESPACE
@@ -16,10 +17,14 @@ namespace Network
         HttpReceiver(QObject *parent = nullptr);
         ~HttpReceiver() = default;
 
-        int startReceiveFile();
+        std::tuple<QString, int> startReceiveFile();
 
     private:
-        QHttpServer *httpServer;
+        void createHttpServer();
+
+    private:
+        static QHttpServer *httpServer;
+        static int httpServerPort;
         bool visited;
     };
 } // namespace Network

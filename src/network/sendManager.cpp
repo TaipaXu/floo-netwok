@@ -17,7 +17,7 @@ namespace Network
         return sender->startSendFile(path);
     }
 
-    int SendManager::createHttpSender(const QString &path)
+    std::tuple<QString, int> SendManager::createHttpSender(const QString &path)
     {
         HttpSender *const sender = new HttpSender(this);
         return sender->startSendFile(path);

@@ -2,20 +2,26 @@
 #include <QHttpServer>
 #include <QSaveFile>
 #include <QIODevice>
+#include <QUuid>
 #include "persistence/settings.hpp"
 
 namespace Network
 {
+    QHttpServer *HttpReceiver::httpServer = nullptr;
+    int HttpReceiver::httpServerPort = 1024;
+
     HttpReceiver::HttpReceiver(QObject *parent)
-        : QObject(parent), httpServer{nullptr}, visited{false}
+        : QObject(parent), visited{false}
     {
     }
 
-    int HttpReceiver::startReceiveFile()
+    std::tuple<QString, int> HttpReceiver::startReceiveFile()
     {
-        httpServer = new QHttpServer(this);
+        createHttpServer();
 
-        httpServer->route("/", QHttpServerRequest::Method::Options, [this](const QHttpServerRequest &request) {
+        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+
+        httpServer->route("/" + id, QHttpServerRequest::Method::Options, [this](const QHttpServerRequest &request) {
             QHttpServerResponse response(QHttpServerResponse::StatusCode::Ok);
             response.addHeader("Access-Control-Allow-Origin", "*");
             response.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -23,7 +29,7 @@ namespace Network
             return response;
         });
 
-        httpServer->route("/", QHttpServerRequest::Method::Post, [this](const QHttpServerRequest &request) {
+        httpServer->route("/" + id, QHttpServerRequest::Method::Post, [this](const QHttpServerRequest &request) {
             if (visited)
             {
                 QHttpServerResponse response(QHttpServerResponse::StatusCode::NotFound);
@@ -39,7 +45,7 @@ namespace Network
                 for (auto &&header : request.headers())
                 {
                     const QString key = header.first;
-                    if (key == QStringLiteral("Filename"))
+                    if (key.toLower() == QStringLiteral("filename"))
                     {
                         fileName = header.second;
                     }
@@ -60,11 +66,20 @@ namespace Network
                 return QHttpServerResponse(QHttpServerResponse::StatusCode::InternalServerError);
             }
         });
-        int port = 1024;
-        while (!httpServer->listen(QHostAddress::Any, port))
+
+        return {id, httpServerPort};
+    }
+
+    void HttpReceiver::createHttpServer()
+    {
+        if (!httpServer)
         {
-            port++;
+            httpServer = new QHttpServer();
+
+            while (!httpServer->listen(QHostAddress::Any, httpServerPort))
+            {
+                httpServerPort++;
+            }
         }
-        return port;
     }
 } // namespace Network

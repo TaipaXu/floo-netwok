@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <QObject>
 #include <QList>
 #include "network/receiver.hpp"
@@ -17,7 +18,7 @@ namespace Network
         ~ReceiveManager() = default;
 
         void createReceiver(const QString &ip, int port);
-        int createHttpReceiver();
+        std::tuple<QString, int> createHttpReceiver();
 
     signals:
         void receiversChanged() const;

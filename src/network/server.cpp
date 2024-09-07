@@ -187,11 +187,12 @@ namespace Network
                 else if (connection->getLinkType() == Model::Connection::LinkType::WSSocket)
                 {
                     GET_RECEIVE_MANAGER_INSTANCE
-                    const int port = receiveManager->createHttpReceiver();
+                    auto [downloadId, port] = receiveManager->createHttpReceiver();
                     QJsonObject json{
                         {"type", "prepareUpload"},
                         {"fileId", file->getId()},
                         {"ip", "server"},
+                        {"downloadId", downloadId},
                         {"port", port},
                     };
                     connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
@@ -349,17 +350,18 @@ namespace Network
         }
     }
 
-    void Server::handleWsClientRequestDownloadFile(QWebSocket *const clientSocket, const QString &fileId) const
+    void Server::handleWsClientRequestDownloadFile(QWebSocket *const clientSocket, const QString &fileId)
     {
         for (auto &&file : myFiles)
         {
             if (file->getId() == fileId)
             {
                 GET_SEND_MANAGER_INSTANCE
-                const int port = sendManager->createHttpSender(file->getPath());
+                auto [downloadId, port] = sendManager->createHttpSender(file->getPath());
                 QJsonObject json{
                     {"type", "uploadFileReady"},
                     {"ip", "server"},
+                    {"downloadId", downloadId},
                     {"port", port},
                     {"fileId", fileId},
                 };
@@ -379,6 +381,7 @@ namespace Network
                         .senderIp = connection->getAddress(),
                         .receiverIp = clientSocket->peerAddress().toString(),
                     };
+                    records.push_back(record);
                     QJsonObject json{
                         {"type", "prepareUploadForWeb"},
                         {"recordId", record.id},
@@ -426,7 +429,7 @@ namespace Network
         }
     }
 
-    void Server::handleClientReadyToUploadFileForWeb(const QString &recordId, int port)
+    void Server::handleClientReadyToUploadFileForWeb(const QString &recordId, const QString &downloadId, int port)
     {
         auto record = std::find_if(records.begin(), records.end(), [&recordId](const Record &record) {
             return record.id == recordId;
@@ -440,6 +443,7 @@ namespace Network
                     QJsonObject json{
                         {"type", "uploadFileReady"},
                         {"ip", record->senderIp},
+                        {"downloadId", downloadId},
                         {"port", port},
                         {"fileId", record->fileId},
                     };
@@ -452,7 +456,7 @@ namespace Network
         }
     }
 
-    void Server::handleClientReadyToDownloadFromWeb(const QString &recordId, int port)
+    void Server::handleClientReadyToDownloadFromWeb(const QString &recordId, const QString &downloadId, int port)
     {
         auto record = std::find_if(records.begin(), records.end(), [&recordId](const Record &record) {
             return record.id == recordId;
@@ -467,6 +471,7 @@ namespace Network
                         {"type", "prepareUpload"},
                         {"fileId", record->fileId},
                         {"ip", record->receiverIp},
+                        {"downloadId", downloadId},
                         {"port", port},
                     };
                     connection->getWsSocket()->sendTextMessage(QJsonDocument(json).toJson(QJsonDocument::Compact));
@@ -529,14 +534,16 @@ namespace Network
                 else if (type == "readyToUploadForWeb")
                 {
                     const QString recordId = obj["recordId"].toString();
+                    const QString downloadId = obj["downloadId"].toString();
                     const int port = obj["port"].toInt();
-                    handleClientReadyToUploadFileForWeb(recordId, port);
+                    handleClientReadyToUploadFileForWeb(recordId, downloadId, port);
                 }
                 else if (type == "readyToDownloadFromWeb")
                 {
                     const QString recordId = obj["recordId"].toString();
+                    const QString downloadId = obj["downloadId"].toString();
                     const int port = obj["port"].toInt();
-                    handleClientReadyToDownloadFromWeb(recordId, port);
+                    handleClientReadyToDownloadFromWeb(recordId, downloadId, port);
                 }
             }
         }
@@ -584,7 +591,7 @@ namespace Network
         }
     }
 
-    void Server::handleWsTextMessageReceived(const QString &message) const
+    void Server::handleWsTextMessageReceived(const QString &message)
     {
         QWebSocket *const socket = qobject_cast<QWebSocket *>(sender());
         if (socket)

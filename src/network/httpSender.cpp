@@ -1,18 +1,24 @@
 #include "./httpSender.hpp"
 #include <QHttpServer>
 #include <QFileInfo>
+#include <QUuid>
 
 namespace Network
 {
+    QHttpServer *HttpSender::httpServer = nullptr;
+    int HttpSender::httpServerPort = 1024;
+
     HttpSender::HttpSender(QObject *parent)
-        : QObject(parent), httpServer{nullptr}, visited{false}
+        : QObject(parent), visited{false}
     {
     }
 
-    int HttpSender::startSendFile(const QString &path)
+    std::tuple<QString, int> HttpSender::startSendFile(const QString &path)
     {
-        httpServer = new QHttpServer(this);
-        httpServer->route("/", QHttpServerRequest::Method::Get, [path, this](const QHttpServerRequest &request) {
+        createHttpServer();
+
+        const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        httpServer->route("/" + id, QHttpServerRequest::Method::Get, [path, this](const QHttpServerRequest &request) {
             if (visited)
             {
                 return QHttpServerResponse(QHttpServerResponse::StatusCode::NotFound);
@@ -25,11 +31,20 @@ namespace Network
                 return response;
             }
         });
-        int port = 1024;
-        while (!httpServer->listen(QHostAddress::Any, port))
+
+        return {id, httpServerPort};
+    }
+
+    void HttpSender::createHttpServer()
+    {
+        if (!httpServer)
         {
-            port++;
+            httpServer = new QHttpServer();
+
+            while (!httpServer->listen(QHostAddress::Any, httpServerPort))
+            {
+                httpServerPort++;
+            }
         }
-        return port;
     }
 } // namespace Network

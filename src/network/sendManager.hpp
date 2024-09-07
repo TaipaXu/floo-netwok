@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <QObject>
 #include <QList>
 #include "network/sender.hpp"
@@ -17,7 +18,7 @@ namespace Network
         ~SendManager() = default;
 
         int createSender(const QString &path);
-        int createHttpSender(const QString &path);
+        std::tuple<QString, int> createHttpSender(const QString &path);
 
     signals:
         void sendersChanged() const;

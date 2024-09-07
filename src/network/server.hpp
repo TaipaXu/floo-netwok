@@ -35,7 +35,7 @@ namespace Network
     private:
         struct Record
         {
-            QString id = QUuid().toString();
+            QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
             QString fileId;
             QString senderIp;
             QString receiverIp;
@@ -78,17 +78,17 @@ namespace Network
         void addClientFiles(const QTcpSocket *const socket, const QJsonArray &filesArray) const;
         void addWsClientFiles(const QWebSocket *const socket, const QJsonArray &filesArray) const;
         void handleClientRequestDownloadFile(QTcpSocket *const clientSocket, const QString &fileId);
-        void handleWsClientRequestDownloadFile(QWebSocket *const clientSocket, const QString &fileId) const;
+        void handleWsClientRequestDownloadFile(QWebSocket *const clientSocket, const QString &fileId);
         void handleClientReadyToUploadFile(const QString &recordId, int port);
-        void handleClientReadyToUploadFileForWeb(const QString &recordId, int port);
-        void handleClientReadyToDownloadFromWeb(const QString &recordId, int port);
+        void handleClientReadyToUploadFileForWeb(const QString &recordId, const QString &downloadId, int port);
+        void handleClientReadyToDownloadFromWeb(const QString &recordId, const QString &downloadId, int port);
 
     private slots:
         void handleTcpNewConnection();
         void handleTcpReadyRead();
         void handleTcpDisconnected();
         void handleWsNewConnection();
-        void handleWsTextMessageReceived(const QString &message) const;
+        void handleWsTextMessageReceived(const QString &message);
         void handleWsDisconnected();
 
     private:

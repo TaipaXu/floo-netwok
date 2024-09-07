@@ -189,10 +189,11 @@ namespace Network
         if (file != myFiles.end())
         {
             GET_SEND_MANAGER_INSTANCE
-            const int port = sendManager->createHttpSender((*file)->getPath());
+            auto [downloadId, port] = sendManager->createHttpSender((*file)->getPath());
             QJsonObject json{
                 {"type", "readyToUploadForWeb"},
                 {"recordId", recordId},
+                {"downloadId", downloadId},
                 {"port", port},
             };
             tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));
@@ -217,10 +218,11 @@ namespace Network
     void Client::handleRequestPrepareDownloadFileFromWeb(const QString &recordId) const
     {
         GET_RECEIVE_MANAGER_INSTANCE
-        const int port = receiveManager->createHttpReceiver();
+        auto [downloadId, port] = receiveManager->createHttpReceiver();
         QJsonObject json{
             {"type", "readyToDownloadFromWeb"},
             {"recordId", recordId},
+            {"downloadId", downloadId},
             {"port", port},
         };
         tcpSocket->write(QJsonDocument(json).toJson(QJsonDocument::Compact));

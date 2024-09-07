@@ -17,7 +17,7 @@ namespace Network
         emit receiversChanged();
     }
 
-    int ReceiveManager::createHttpReceiver()
+    std::tuple<QString, int> ReceiveManager::createHttpReceiver()
     {
         HttpReceiver *receiver = new HttpReceiver(this);
         return receiver->startReceiveFile();
