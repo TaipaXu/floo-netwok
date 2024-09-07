@@ -3,12 +3,14 @@
 #include <QTcpSocket>
 #include <QFile>
 #include <QFileInfo>
+#include <QUuid>
 #include "utils/utils.hpp"
 
 namespace Network
 {
     Sender::Sender(QObject *parent)
         : QObject(parent),
+          id{QUuid::createUuid().toString(QUuid::WithoutBraces)},
           status{Status::SettingUp},
           tcpServer{nullptr},
           localFile{nullptr},

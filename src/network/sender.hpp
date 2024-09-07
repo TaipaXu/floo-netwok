@@ -16,6 +16,7 @@ namespace Network
     {
         Q_OBJECT
 
+        Q_PROPERTY(QString id MEMBER id CONSTANT)
         Q_PROPERTY(Status status READ getStatus NOTIFY statusChanged)
         Q_PROPERTY(QString statusName READ getStatusName NOTIFY statusChanged)
         Q_PROPERTY(QString name READ getName NOTIFY nameChanged)
@@ -63,6 +64,7 @@ namespace Network
         void handleDisconnected();
 
     private:
+        const QString id;
         Status status;
         QTcpServer *tcpServer;
         QFile *localFile;

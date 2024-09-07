@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QUuid>
 #include "persistence/settings.hpp"
 #include "utils/utils.hpp"
 
@@ -11,6 +12,7 @@ namespace Network
 {
     Receiver::Receiver(QObject *parent)
         : QObject(parent),
+          id{QUuid::createUuid().toString(QUuid::WithoutBraces)},
           status{Status::SettingUp},
           tcpSocket{nullptr},
           localFile{nullptr},
