@@ -329,7 +329,6 @@ namespace Network
                         .senderIp = connection->getAddress(),
                         .receiverIp = clientSocket->peerAddress().toString(),
                     };
-                    qDebug() << "record" << record.id << record.fileId << record.senderIp << record.receiverIp;
                     records.push_back(record);
                     QJsonObject json{
                         {"recordId", record.id},
@@ -482,11 +481,21 @@ namespace Network
     void Server::handleTcpNewConnection()
     {
         QTcpSocket *const socket = tcpServer->nextPendingConnection();
-        connect(socket, &QTcpSocket::readyRead, this, &Server::handleTcpReadyRead);
-        connect(socket, &QTcpSocket::disconnected, this, &Server::handleTcpDisconnected);
-        connections.push_back(new Model::Connection(socket));
-        emit connectionsChanged();
-        broadcastFiles();
+        auto it = std::find_if(connections.begin(), connections.end(), [socket](Model::Connection *connection) {
+            return connection->getLinkType() == Model::Connection::LinkType::TcpSocket && connection->getAddress() == socket->peerAddress().toString();
+        });
+        if (it != connections.end())
+        {
+            socket->close();
+        }
+        else
+        {
+            connect(socket, &QTcpSocket::readyRead, this, &Server::handleTcpReadyRead);
+            connect(socket, &QTcpSocket::disconnected, this, &Server::handleTcpDisconnected);
+            connections.push_back(new Model::Connection(socket));
+            emit connectionsChanged();
+            broadcastFiles();
+        }
     }
 
     void Server::handleTcpReadyRead()
@@ -558,11 +567,21 @@ namespace Network
     void Server::handleWsNewConnection()
     {
         QWebSocket *const socket = wsServer->nextPendingConnection();
-        connect(socket, &QWebSocket::textMessageReceived, this, &Server::handleWsTextMessageReceived);
-        connect(socket, &QWebSocket::disconnected, this, &Server::handleWsDisconnected);
-        connections.push_back(new Model::Connection(socket));
-        emit connectionsChanged();
-        broadcastFiles();
+        auto it = std::find_if(connections.begin(), connections.end(), [socket](Model::Connection *connection) {
+            return connection->getLinkType() == Model::Connection::LinkType::WSSocket && connection->getAddress() == socket->peerAddress().toString();
+        });
+        if (it != connections.end())
+        {
+            socket->close();
+        }
+        else
+        {
+            connect(socket, &QWebSocket::textMessageReceived, this, &Server::handleWsTextMessageReceived);
+            connect(socket, &QWebSocket::disconnected, this, &Server::handleWsDisconnected);
+            connections.push_back(new Model::Connection(socket));
+            emit connectionsChanged();
+            broadcastFiles();
+        }
     }
 
     void Server::handleWsTextMessageReceived(const QString &message) const
