@@ -139,10 +139,13 @@ namespace Network
             if (found == this->myFiles.end())
             {
                 const QFileInfo fileInfo(url.toLocalFile());
-                this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
-                if (!appended)
+                if (fileInfo.exists() && fileInfo.isFile())
                 {
-                    appended = true;
+                    this->myFiles.append(new Model::MyFile(fileInfo.fileName(), fileInfo.size(), fileInfo.filePath(), this));
+                    if (!appended)
+                    {
+                        appended = true;
+                    }
                 }
             }
         }
