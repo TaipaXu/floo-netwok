@@ -32,8 +32,12 @@ set(SOURCES
         network/receiveManager.cpp
         network/sender.hpp
         network/sender.cpp
+        network/tcpSender.hpp
+        network/tcpSender.cpp
         network/receiver.hpp
         network/receiver.cpp
+        network/tcpReceiver.hpp
+        network/tcpReceiver.cpp
         network/httpReceiver.hpp
         network/httpReceiver.cpp
         network/webServer.hpp

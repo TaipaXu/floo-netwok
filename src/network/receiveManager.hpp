@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QList>
 #include "network/receiver.hpp"
+#include "network/tcpReceiver.hpp"
+#include "network/httpReceiver.hpp"
 
 namespace Network
 {
@@ -17,7 +19,7 @@ namespace Network
         static ReceiveManager *getInstance();
         ~ReceiveManager() = default;
 
-        void createReceiver(const QString &ip, int port);
+        void createTcpReceiver(const QString &ip, int port);
         std::tuple<QString, int> createHttpReceiver();
 
     signals:

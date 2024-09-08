@@ -2,6 +2,7 @@
 #include <QHttpServer>
 #include <QFileInfo>
 #include <QUuid>
+#include "utils/utils.hpp"
 
 namespace Network
 {
@@ -9,12 +10,26 @@ namespace Network
     int HttpSender::httpServerPort = 1024;
 
     HttpSender::HttpSender(QObject *parent)
-        : QObject(parent), visited{false}
+        : Sender(parent), visited{false}, size{0}
     {
+    }
+
+    Sender::Type HttpSender::getType() const
+    {
+        return Type::Http;
     }
 
     std::tuple<QString, int> HttpSender::startSendFile(const QString &path)
     {
+        const QFileInfo fileInfo(path);
+        if (fileInfo.exists())
+        {
+            name = fileInfo.fileName();
+            size = fileInfo.size();
+            emit nameChanged();
+            emit sizeChanged();
+        }
+
         createHttpServer();
 
         const QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -45,6 +60,23 @@ namespace Network
             {
                 httpServerPort++;
             }
+        }
+    }
+
+    QString HttpSender::getName() const
+    {
+        return name;
+    }
+
+    QString HttpSender::getSize() const
+    {
+        if (size != 0)
+        {
+            return Utils::getReadableSize(size);
+        }
+        else
+        {
+            return QStringLiteral();
         }
     }
 } // namespace Network

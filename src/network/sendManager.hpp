@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QList>
 #include "network/sender.hpp"
+#include "network/tcpSender.hpp"
+#include "network/httpSender.hpp"
 
 namespace Network
 {
@@ -17,7 +19,7 @@ namespace Network
         static SendManager *getInstance();
         ~SendManager() = default;
 
-        int createSender(const QString &path);
+        int createTcpSender(const QString &path);
         std::tuple<QString, int> createHttpSender(const QString &path);
 
     signals:

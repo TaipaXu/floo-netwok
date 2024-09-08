@@ -35,10 +35,10 @@ Rectangle {
         anchors.bottom: parent.bottom
         clip: true
 
-
         columnWidthProvider: (column) => {
             return tableView.width / tableView.model.columnCount;
         }
+        rowHeightProvider: () => 30
 
         model: TableModel {
             TableModelColumn { display: "name" }
@@ -69,23 +69,17 @@ Rectangle {
             DelegateChoice {
                 column: 2
 
-                delegate: Rectangle {
-                    implicitHeight: 50
-                    color: "transparent"
+                delegate: RowLayout {
+                    spacing: 4
 
-                    RowLayout {
-                        width: parent.width
-                        spacing: 4
+                    ProgressBar {
+                        Layout.fillWidth: true
+                        value: display
+                    }
 
-                        ProgressBar {
-                            Layout.fillWidth: true
-                            value: display
-                        }
-
-                        Label {
-                            Layout.preferredWidth: 30
-                            text: (display === 1 ? 100 : (display * 100).toFixed(1)) + "%"
-                        }
+                    Label {
+                        Layout.preferredWidth: 30
+                        text: (display === 1 ? 100 : (display * 100).toFixed(1)) + "%"
                     }
                 }
             }
@@ -107,43 +101,69 @@ Rectangle {
             for (const item of ReceiveManager.receivers) {
                 const found = root.items.find((element) => element.id === item.id);
                 if (found === undefined) {
-                    root.items.push({
-                        "id": item.id,
-                        "name": item.name,
-                        "size": item.size,
-                        "progress": item.progress,
-                        "status": item.statusName
-                    });
-                    tableView.model.rows = root.items;
+                    if (item.type === Network.Receiver.Type.Tcp) {
+                        root.items.push({
+                            "id": item.id,
+                            "name": item.name,
+                            "size": item.size,
+                            "progress": item.progress,
+                            "status": item.statusName
+                        });
+                        tableView.model.rows = root.items;
 
-                    item.nameChanged.connect(() => {
-                        const found = root.items.find((element) => element.id === item.id);
-                        if (found !== undefined) {
-                            found.name = item.name;
-                            tableView.model.rows = root.items;
-                        }
-                    });
-                    item.sizeChanged.connect(() => {
-                        const found = root.items.find((element) => element.id === item.id);
-                        if (found !== undefined) {
-                            found.size = item.size;
-                            tableView.model.rows = root.items;
-                        }
-                    });
-                    item.progressChanged.connect(() => {
-                        const found = root.items.find((element) => element.id === item.id);
-                        if (found !== undefined) {
-                            found.progress = item.progress;
-                            tableView.model.rows = root.items;
-                        }
-                    });
-                    item.statusChanged.connect(() => {
-                        const found = root.items.find((element) => element.id === item.id);
-                        if (found !== undefined) {
-                            found.status = item.statusName;
-                            tableView.model.rows = root.items;
-                        }
-                    });
+                        item.nameChanged.connect(() => {
+                            const found = root.items.find((element) => element.id === item.id);
+                            if (found !== undefined) {
+                                found.name = item.name;
+                                tableView.model.rows = root.items;
+                            }
+                        });
+                        item.sizeChanged.connect(() => {
+                            const found = root.items.find((element) => element.id === item.id);
+                            if (found !== undefined) {
+                                found.size = item.size;
+                                tableView.model.rows = root.items;
+                            }
+                        });
+                        item.progressChanged.connect(() => {
+                            const found = root.items.find((element) => element.id === item.id);
+                            if (found !== undefined) {
+                                found.progress = item.progress;
+                                tableView.model.rows = root.items;
+                            }
+                        });
+                        item.statusChanged.connect(() => {
+                            const found = root.items.find((element) => element.id === item.id);
+                            if (found !== undefined) {
+                                found.status = item.statusName;
+                                tableView.model.rows = root.items;
+                            }
+                        });
+                    } else {
+                        root.items.push({
+                            "id": item.id,
+                            "name": item.name,
+                            "size": item.size,
+                            "progress": 1,
+                            "status": qsTr("Unknown")
+                        });
+                        tableView.model.rows = root.items;
+
+                        item.nameChanged.connect(() => {
+                            const found = root.items.find((element) => element.id === item.id);
+                            if (found !== undefined) {
+                                found.name = item.name;
+                                tableView.model.rows = root.items;
+                            }
+                        });
+                        item.sizeChanged.connect(() => {
+                            const found = root.items.find((element) => element.id === item.id);
+                            if (found !== undefined) {
+                                found.size = item.size;
+                                tableView.model.rows = root.items;
+                            }
+                        });
+                    }
                 }
             }
         }

@@ -9,9 +9,9 @@ namespace Network
         return &instance;
     }
 
-    int SendManager::createSender(const QString &path)
+    int SendManager::createTcpSender(const QString &path)
     {
-        Sender *const sender = new Sender(this);
+        TcpSender *const sender = new TcpSender(this);
         senders.append(sender);
         emit sendersChanged();
         return sender->startSendFile(path);
@@ -20,6 +20,8 @@ namespace Network
     std::tuple<QString, int> SendManager::createHttpSender(const QString &path)
     {
         HttpSender *const sender = new HttpSender(this);
+        senders.append(sender);
+        emit sendersChanged();
         return sender->startSendFile(path);
     }
 } // namespace Network

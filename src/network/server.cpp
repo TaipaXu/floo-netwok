@@ -307,7 +307,7 @@ namespace Network
             if (file->getId() == fileId)
             {
                 GET_SEND_MANAGER_INSTANCE
-                const int port = sendManager->createSender(file->getPath());
+                const int port = sendManager->createTcpSender(file->getPath());
                 QJsonObject json{
                     {"type", "uploadFileReady"},
                     {"ip", tcpServer->serverAddress().toString()},
@@ -405,7 +405,7 @@ namespace Network
             if (reveiverIp == "server")
             {
                 GET_RECEIVE_MANAGER_INSTANCE
-                receiveManager->createReceiver(record->senderIp, port);
+                receiveManager->createTcpReceiver(record->senderIp, port);
             }
             else
             {

@@ -4,6 +4,7 @@
 #include <QIODevice>
 #include <QUuid>
 #include "persistence/settings.hpp"
+#include "utils/utils.hpp"
 
 namespace Network
 {
@@ -11,8 +12,13 @@ namespace Network
     int HttpReceiver::httpServerPort = 1024;
 
     HttpReceiver::HttpReceiver(QObject *parent)
-        : QObject(parent), visited{false}
+        : Receiver(parent), visited{false}, size{0}
     {
+    }
+
+    Receiver::Type HttpReceiver::getType() const
+    {
+        return Type::Http;
     }
 
     std::tuple<QString, int> HttpReceiver::startReceiveFile()
@@ -48,6 +54,8 @@ namespace Network
                     if (key.toLower() == QStringLiteral("filename"))
                     {
                         fileName = header.second;
+                        name = header.second;
+                        emit nameChanged();
                     }
                 }
                 std::unique_ptr<Persistence::Settings> settings = std::make_unique<Persistence::Settings>();
@@ -80,6 +88,23 @@ namespace Network
             {
                 httpServerPort++;
             }
+        }
+    }
+
+    QString HttpReceiver::getName() const
+    {
+        return name;
+    }
+
+    QString HttpReceiver::getSize() const
+    {
+        if (size != 0)
+        {
+            return Utils::getReadableSize(size);
+        }
+        else
+        {
+            return QStringLiteral();
         }
     }
 } // namespace Network

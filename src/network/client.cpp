@@ -8,7 +8,6 @@
 #include "utils/utils.hpp"
 #include "network/sendManager.hpp"
 #include "network/receiveManager.hpp"
-
 #include "models/file.hpp"
 #include "models/myFile.hpp"
 
@@ -171,7 +170,7 @@ namespace Network
         if (file != myFiles.end())
         {
             GET_SEND_MANAGER_INSTANCE
-            const int port = sendManager->createSender((*file)->getPath());
+            const int port = sendManager->createTcpSender((*file)->getPath());
             QJsonObject json{
                 {"type", "readyToUpload"},
                 {"recordId", recordId},
@@ -211,7 +210,7 @@ namespace Network
             }
 
             GET_RECEIVE_MANAGER_INSTANCE
-            receiveManager->createReceiver(ip, port);
+            receiveManager->createTcpReceiver(ip, port);
         }
     }
 

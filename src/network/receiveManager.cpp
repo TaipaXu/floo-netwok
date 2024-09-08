@@ -9,9 +9,9 @@ namespace Network
         return &instance;
     }
 
-    void ReceiveManager::createReceiver(const QString &ip, int port)
+    void ReceiveManager::createTcpReceiver(const QString &ip, int port)
     {
-        Receiver *receiver = new Receiver(this);
+        TcpReceiver *receiver = new TcpReceiver(this);
         receiver->startReceiveFile(ip, port);
         receivers.append(receiver);
         emit receiversChanged();
@@ -20,6 +20,8 @@ namespace Network
     std::tuple<QString, int> ReceiveManager::createHttpReceiver()
     {
         HttpReceiver *receiver = new HttpReceiver(this);
+        receivers.append(receiver);
+        emit receiversChanged();
         return receiver->startReceiveFile();
     }
 } // namespace Network

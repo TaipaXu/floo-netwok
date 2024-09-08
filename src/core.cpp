@@ -10,7 +10,11 @@
 #include "network/sendManager.hpp"
 #include "network/receiveManager.hpp"
 #include "network/sender.hpp"
+#include "network/tcpSender.hpp"
+#include "network/httpSender.hpp"
 #include "network/receiver.hpp"
+#include "network/tcpReceiver.hpp"
+#include "network/httpReceiver.hpp"
 #include "persistence/settings.hpp"
 #include "utils/utils.hpp"
 
@@ -25,7 +29,11 @@ Core::Core()
     QJSEngine::setObjectOwnership(Network::SendManager::getInstance(), QQmlEngine::CppOwnership);
     QJSEngine::setObjectOwnership(Network::ReceiveManager::getInstance(), QQmlEngine::CppOwnership);
     qmlRegisterType<Network::Sender>("network.sender", 1, 0, "Sender");
+    qmlRegisterType<Network::TcpSender>("network.tcpSender", 1, 0, "TcpSender");
+    qmlRegisterType<Network::HttpSender>("network.httpSender", 1, 0, "HttpSender");
     qmlRegisterType<Network::Receiver>("network.receiver", 1, 0, "Receiver");
+    qmlRegisterType<Network::TcpReceiver>("network.tcpReceiver", 1, 0, "TcpReceiver");
+    qmlRegisterType<Network::HttpReceiver>("network.httpReceiver", 1, 0, "HttpReceiver");
     qmlRegisterType<Persistence::Settings>("persistence.settings", 1, 0, "Settings");
     qmlRegisterType<Utils>("utils", 1, 0, "Utils");
 
