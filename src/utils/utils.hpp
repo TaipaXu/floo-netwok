@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tuple>
 #include <QObject>
 #include <QString>
 
@@ -28,4 +29,6 @@ public:
     Q_INVOKABLE static void openThisProjectIssuesPage();
 
     Q_INVOKABLE static void openFileDirectory(const QString &filePath);
+
+    static std::tuple<QString, QString> getExclusiveFilePath(const QString &dirPath, const QString &fileName);
 };

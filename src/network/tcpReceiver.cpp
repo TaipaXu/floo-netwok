@@ -108,8 +108,11 @@ namespace Network
                 in >> name;
                 bytesReceived += fileNameSize;
                 std::unique_ptr<Persistence::Settings> settings = std::make_unique<Persistence::Settings>();
-                QString filePath = settings->getDownloadPath() + "/" + QString(name);
-                filePath = QDir::toNativeSeparators(filePath);
+                auto [newnewFileName, filePath] = Utils::getExclusiveFilePath(settings->getDownloadPath(), QString(name));
+                if (QString(name) != newnewFileName)
+                {
+                    name = newnewFileName.toUtf8().data();
+                }
                 localFile = new QFile(filePath, this);
                 status = Status::Receiving;
                 emit statusChanged();

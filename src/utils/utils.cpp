@@ -6,6 +6,7 @@
 #include <QNetworkInterface>
 #include <QClipboard>
 #include <QUrl>
+#include <QDir>
 #include <QFileInfo>
 #include "appConfig.hpp"
 
@@ -107,4 +108,37 @@ void Utils::openFileDirectory(const QString &filePath)
     {
         QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo.absolutePath()));
     }
+}
+
+std::tuple<QString, QString> Utils::getExclusiveFilePath(const QString &dirPath, const QString &fileName)
+{
+    const QDir dir(dirPath);
+    const QString filePath = dir.filePath(fileName);
+    const QFileInfo fileInfo(filePath);
+
+    if (fileInfo.exists())
+    {
+        int index = 1;
+        while (true)
+        {
+            QString newFileName;
+            if (fileInfo.suffix().isEmpty())
+            {
+                newFileName = fileInfo.baseName() + "(" + QString::number(index) + ")";
+            }
+            else
+            {
+                newFileName = fileInfo.baseName() + "(" + QString::number(index) + ")." + fileInfo.suffix();
+            }
+
+            const QString newFilePath = dir.filePath(newFileName);
+            const QFileInfo newFileInfo(newFilePath);
+            if (!newFileInfo.exists())
+            {
+                return {newFileName, newFilePath};
+            }
+            index++;
+        }
+    }
+    return {fileName, filePath};
 }

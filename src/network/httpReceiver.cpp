@@ -59,7 +59,12 @@ namespace Network
                     }
                 }
                 std::unique_ptr<Persistence::Settings> settings = std::make_unique<Persistence::Settings>();
-                QString filePath = settings->getDownloadPath() + "/" + fileName;
+                auto [newnewFileName, filePath] = Utils::getExclusiveFilePath(settings->getDownloadPath(), fileName);
+                if (fileName != newnewFileName)
+                {
+                    name = newnewFileName;
+                    emit nameChanged();
+                }
                 QSaveFile file(filePath);
                 if (file.open(QIODevice::WriteOnly))
                 {
