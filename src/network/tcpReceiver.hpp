@@ -64,6 +64,7 @@ namespace Network
         long long totalBytes;
         long long bytesReceived;
         long long fileNameSize;
+        long long fileSize;
         QByteArray inBlock;
     };
 

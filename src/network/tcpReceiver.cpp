@@ -18,6 +18,7 @@ namespace Network
           totalBytes{0},
           bytesReceived{0},
           fileNameSize{0},
+          fileSize{0},
           inBlock{}
     {
     }
@@ -67,7 +68,7 @@ namespace Network
 
     QString TcpReceiver::getSize() const
     {
-        return Utils::getReadableSize(totalBytes);
+        return Utils::getReadableSize(fileSize);
     }
 
     double TcpReceiver::getProgress() const
@@ -100,6 +101,7 @@ namespace Network
             {
                 in >> totalBytes >> fileNameSize;
                 bytesReceived += sizeof(long long) * 2;
+                fileSize = totalBytes - fileNameSize - sizeof(long long) * 2;
                 emit sizeChanged();
             }
             if ((tcpSocket->bytesAvailable() >= fileNameSize) && (fileNameSize != 0))
