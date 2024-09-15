@@ -20,7 +20,7 @@ namespace Model
 
         const QString &getId() const;
         const QString &getName() const;
-        int getSize() const;
+        long long int getSize() const;
         QString getSizeName() const;
 
     private:
@@ -34,7 +34,7 @@ namespace Model
         return id;
     }
 
-    inline int File::getSize() const
+    inline long long int File::getSize() const
     {
         return size;
     }

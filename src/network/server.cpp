@@ -294,7 +294,7 @@ namespace Network
                 const QJsonObject fileObj = fileValue.toObject();
                 const QString id = fileObj["id"].toString();
                 const QString name = fileObj["name"].toString();
-                const int size = fileObj["size"].toInteger();
+                const long long int size = fileObj["size"].toInteger();
                 files.push_back(new Model::File(id, name, size, connection));
             }
             connection->setFiles(files);
