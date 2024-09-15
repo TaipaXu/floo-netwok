@@ -40,11 +40,12 @@ Rectangle {
                 elide: Text.ElideLeft
             }
 
-            Label {
+            LinkLabel {
                 Layout.fillWidth: true
                 text: root.file.path
                 font.pixelSize: 12
                 elide: Text.ElideLeft
+                path: root.file.path
             }
         }
 

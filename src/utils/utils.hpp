@@ -26,4 +26,6 @@ public:
     Q_INVOKABLE static void openThisProjectPage();
 
     Q_INVOKABLE static void openThisProjectIssuesPage();
+
+    Q_INVOKABLE static void openFileDirectory(const QString &filePath);
 };

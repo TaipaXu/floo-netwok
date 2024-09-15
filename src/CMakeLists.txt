@@ -94,6 +94,7 @@ qt_add_qml_module(${TARGET}
         "widgets/ClientChannel.qml"
         "widgets/ServerChannel.qml"
         "widgets/Tag.qml"
+        "widgets/LinkLabel.qml"
         "widgets/MyFile.qml"
         "widgets/File.qml"
         "widgets/Sends.qml"

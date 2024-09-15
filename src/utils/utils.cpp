@@ -6,6 +6,7 @@
 #include <QNetworkInterface>
 #include <QClipboard>
 #include <QUrl>
+#include <QFileInfo>
 #include "appConfig.hpp"
 
 Utils::Utils(QObject *parent)
@@ -97,4 +98,13 @@ void Utils::openThisProjectPage()
 void Utils::openThisProjectIssuesPage()
 {
     QDesktopServices::openUrl(QUrl(PROJECT_ISSUES_DOMAIN));
+}
+
+void Utils::openFileDirectory(const QString &filePath)
+{
+    QFileInfo fileInfo(filePath);
+    if (fileInfo.exists())
+    {
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo.absolutePath()));
+    }
 }
